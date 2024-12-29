@@ -1,4 +1,8 @@
 run:
-	go run cmd/main.go
+	go run cmd/glsync/main.go
+build:
+	go build ./...
+install:
+	go install ./...
 test:
 	go test -v ./...
