@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
+	"github.com/ahmed-e-abdulaziz/gh-leet-sync/handler"
+	"github.com/ahmed-e-abdulaziz/gh-leet-sync/leetcode"
 )
 
 const (
@@ -18,6 +20,13 @@ const (
 )
 
 func main() {
+	cfg := initConfig()
+	lc := leetcode.NewLeetCode(cfg)
+	handler := handler.NewHandler(cfg, lc)
+	handler.Execute()
+}
+
+func initConfig() config.Config {
 	cfg := config.Config{}
 	flag.StringVar(&cfg.LCookie, lcCookieCmd, "", "The cookie of your LeetCode session, refer to the README.md for more info")
 	flag.StringVar(&cfg.RepoUrl, repoUrlCmd, "", "Github repo's url to push LC submissions to")
@@ -29,10 +38,11 @@ func main() {
 		log.Fatalf("Invalid github repo url provided provided, use -%v option to provide your github repo url ", repoUrlCmd)
 	}
 	log.Println("Input parsed successfully.")
+	return cfg
 }
 
 func isValidCookie(cookie string) bool {
-	payload, err := base64.StdEncoding.DecodeString(strings.Split(cookie, ".")[1])
+	payload, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(strings.Split(cookie, ".")[1])
 	if err != nil {
 		return false
 	}
