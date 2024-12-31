@@ -2,19 +2,18 @@ package handler
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
+	"github.com/ahmed-e-abdulaziz/gh-leet-sync/github"
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/leetcode"
 )
 
 type Handler struct {
-	cfg      config.Config
 	leetcode leetcode.LeetCode
+	github   github.Github
 }
 
-func NewHandler(cfg config.Config, leetcode leetcode.LeetCode) Handler {
-	return Handler{cfg, leetcode}
+func NewHandler(leetcode leetcode.LeetCode, github github.Github) Handler {
+	return Handler{leetcode, github}
 }
 
 func (h Handler) Execute() {
@@ -24,12 +23,12 @@ func (h Handler) Execute() {
 		submissionsOverview[q.TitleSlug] = h.leetcode.FetchSubmissionOverview(q.TitleSlug)
 		s := submissionsOverview[q.TitleSlug]
 		code := h.leetcode.FetchSubmissionCode(s.Id)
-		fileName := h.buildFileName(q.FrontendId, q.Title, s.Lang)
+		fileName := h.buildFileName(q.FrontendId, q.TitleSlug, s.Lang)
 		folderName := fmt.Sprintf("%v %v", q.FrontendId, q.Title)
-		fmt.Printf(code, fileName, folderName, q.LastSubmittedAt)
+		commitName := fmt.Sprintf("LeetCode submission for question: %v %v", q.FrontendId, q.Title)
+		h.github.Commit(folderName, fileName, code, commitName, q.LastSubmittedAt)
 	}
-
-	log.Println("Not implemented yet")
+	h.github.Push()
 }
 
 func (Handler) buildFileName(id, titleSlug, lang string) string {

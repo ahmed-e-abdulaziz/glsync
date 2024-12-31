@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
+	"github.com/ahmed-e-abdulaziz/gh-leet-sync/github"
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/handler"
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/leetcode"
 )
@@ -22,7 +23,8 @@ const (
 func main() {
 	cfg := initConfig()
 	lc := leetcode.NewLeetCode(cfg)
-	handler := handler.NewHandler(cfg, lc)
+	gh := github.NewGithub(cfg)
+	handler := handler.NewHandler(lc, gh)
 	handler.Execute()
 }
 
