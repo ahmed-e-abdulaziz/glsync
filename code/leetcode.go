@@ -13,11 +13,12 @@ import (
 )
 
 type leetcode struct {
-	cfg config.Config
+	cfg        config.Config
+	graphqlUrl string
 }
 
-func NewLeetCode(cfg config.Config) leetcode {
-	return leetcode{cfg}
+func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
+	return leetcode{cfg, leetcodeGraphqlUrl}
 }
 
 func (lc leetcode) FetchSubmissions() []Submission {
@@ -91,7 +92,7 @@ func (lc leetcode) fetchSubmissionCode(id string) string {
 }
 
 func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodPost, "https://leetcode.com/graphql/", bytes.NewBuffer([]byte(query)))
+	req, err := http.NewRequest(http.MethodPost, lc.graphqlUrl, bytes.NewBuffer([]byte(query)))
 	if err != nil {
 		return nil, err
 	}

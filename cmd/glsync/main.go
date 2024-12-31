@@ -22,7 +22,7 @@ const (
 
 func main() {
 	cfg := initConfig()
-	lc := code.NewLeetCode(cfg)
+	lc := code.NewLeetCode(cfg, "https://leetcode.com/graphql/")
 	gh := git.NewGithub(cfg)
 	handler := handler.NewHandler(lc, gh)
 	handler.Execute()
