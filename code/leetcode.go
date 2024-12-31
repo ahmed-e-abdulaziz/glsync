@@ -1,4 +1,4 @@
-package leetcode
+package code
 
 import (
 	"bytes"
@@ -12,15 +12,26 @@ import (
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
 )
 
-type LeetCode struct {
+type leetcode struct {
 	cfg config.Config
 }
 
-func NewLeetCode(cfg config.Config) LeetCode {
-	return LeetCode{cfg}
+func NewLeetCode(cfg config.Config) leetcode {
+	return leetcode{cfg}
 }
 
-func (lc LeetCode) FetchQuestions() []Question {
+func (lc leetcode) FetchSubmissions() []Submission {
+	questions := lc.fetchQuestions()
+	submissions := make([]Submission, len(questions))
+	for idx, question := range questions {
+		lcSubmission := lc.fetchSubmissionOverview(question.TitleSlug)
+		code := lc.fetchSubmissionCode(lcSubmission.Id)
+		submissions[idx] = Submission{question.FrontendId, question.Title, question.TitleSlug, question.LastSubmittedAt, lcSubmission.Lang, code}
+	}
+	return submissions
+}
+
+func (lc leetcode) fetchQuestions() []LCQuestion {
 	query := `{
 		"query": "\n    query userProgressQuestionList($filters: UserProgressQuestionListInput) {\n  userProgressQuestionList(filters: $filters) {\n    questions {\n      frontendId\n      title\n      titleSlug\n      lastSubmittedAt\n      questionStatus\n      lastResult\n    }\n  }\n}\n    ",
 		"variables": {
@@ -32,16 +43,16 @@ func (lc LeetCode) FetchQuestions() []Question {
 		},
 		"operationName": "userProgressQuestionList"
 	}`
-	bodyBytes, err := lc.queryGraphql(query)
+	bodyBytes, err := lc.queryLeetcode(query)
 	if err != nil {
-		log.Fatal("Encountered an error while fetching user questions", err)
+		log.Fatal("Encountered an error while fetching user questions from leetcode", err)
 	}
-	body := &RequestBody[UserProgressQuestionListData]{}
+	body := &RequestBody[lcUserProgressQuestionListData]{}
 	json.Unmarshal(bodyBytes, body)
 	return body.Data.QuestionsList.Questions
 }
 
-func (lc LeetCode) FetchSubmissionOverview(titleSlug string) SumbissionOverview {
+func (lc leetcode) fetchSubmissionOverview(titleSlug string) lcSumbissionOverview {
 	query := fmt.Sprintf(`{
 		"query": "\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: Int, $status: Int) {\n  questionSubmissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      titleSlug\n      status\n      statusDisplay\n      lang\n      langName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      hasNotes\n      notes\n      flagType\n      frontendId\n      topicTags {\n        id\n      }\n    }\n  }\n}\n    ",
 		"variables": {
@@ -53,16 +64,16 @@ func (lc LeetCode) FetchSubmissionOverview(titleSlug string) SumbissionOverview 
 		"operationName": "submissionList"
 	}`, titleSlug)
 
-	bodyBytes, err := lc.queryGraphql(query)
+	bodyBytes, err := lc.queryLeetcode(query)
 	if err != nil {
-		log.Fatal("Encountered an error while fetching submssion overview", err)
+		log.Fatal("Encountered an error while fetching submssion overview from leetcode", err)
 	}
-	body := &RequestBody[SubmissionListData]{}
+	body := &RequestBody[lcSubmissionListData]{}
 	json.Unmarshal(bodyBytes, body)
-	return body.Data.SubmissionList.Submissions[0] // we only need the lastest submission
+	return body.Data.LCSubmissionList.LCSubmissions[0] // we only need the lastest submission
 }
 
-func (lc LeetCode) FetchSubmissionCode(id string) string {
+func (lc leetcode) fetchSubmissionCode(id string) string {
 	query := fmt.Sprintf(`{
 			"query": "\n    query submissionDetails($submissionId: Int!) {\n  submissionDetails(submissionId: $submissionId) {\n    runtime\n    runtimeDisplay\n    runtimePercentile\n    runtimeDistribution\n    memory\n    memoryDisplay\n    memoryPercentile\n    memoryDistribution\n    code\n    timestamp\n    statusCode\n    user {\n      username\n      profile {\n        realName\n        userAvatar\n      }\n    }\n    lang {\n      name\n      verboseName\n    }\n    question {\n      questionId\n      titleSlug\n      hasFrontendPreview\n    }\n    notes\n    flagType\n    topicTags {\n      tagId\n      slug\n      name\n    }\n    runtimeError\n    compileError\n    lastTestcase\n    codeOutput\n    expectedOutput\n    totalCorrect\n    totalTestcases\n    fullCodeOutput\n    testDescriptions\n    testBodies\n    testInfo\n    stdOutput\n  }\n}\n    ",
 			"variables": {
@@ -70,16 +81,16 @@ func (lc LeetCode) FetchSubmissionCode(id string) string {
 			},
 			"operationName": "submissionDetails"
 		}`, id)
-	bodyBytes, err := lc.queryGraphql(query)
+	bodyBytes, err := lc.queryLeetcode(query)
 	if err != nil {
-		log.Fatal("Encountered an error while fetching submssion overview", err)
+		log.Fatal("Encountered an error while fetching submssion code from leetcode", err)
 	}
-	body := &RequestBody[SubmissionDetailsData]{}
+	body := &RequestBody[lcSubmissionDetailsData]{}
 	json.Unmarshal(bodyBytes, body)
 	return body.Data.Details.Code
 }
 
-func (lc LeetCode) queryGraphql(query string) ([]byte, error) {
+func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodPost, "https://leetcode.com/graphql/", bytes.NewBuffer([]byte(query)))
 	if err != nil {
 		return nil, err
@@ -110,15 +121,15 @@ type RequestBody[T any] struct {
 	Data T `json:"data"`
 }
 
-type UserProgressQuestionListData struct {
-	QuestionsList UserProgressQuestionList `json:"userProgressQuestionList"`
+type lcUserProgressQuestionListData struct {
+	QuestionsList lcUserProgressQuestionList `json:"userProgressQuestionList"`
 }
 
-type UserProgressQuestionList struct {
-	Questions []Question `json:"questions"`
+type lcUserProgressQuestionList struct {
+	Questions []LCQuestion `json:"questions"`
 }
 
-type Question struct {
+type LCQuestion struct {
 	FrontendId      string    `json:"frontendId"`
 	Title           string    `json:"title"`
 	TitleSlug       string    `json:"titleSlug"`
@@ -127,22 +138,22 @@ type Question struct {
 	LastResult      string    `json:"lastResult"`
 }
 
-type SubmissionListData struct {
-	SubmissionList SubmissionList `json:"questionSubmissionList"`
+type lcSubmissionListData struct {
+	LCSubmissionList lcSubmissionList `json:"questionSubmissionList"`
 }
-type SubmissionList struct {
-	Submissions []SumbissionOverview `json:"submissions"`
+type lcSubmissionList struct {
+	LCSubmissions []lcSumbissionOverview `json:"submissions"`
 }
 
-type SumbissionOverview struct {
+type lcSumbissionOverview struct {
 	Id   string `json:"id"`
 	Lang string `json:"lang"`
 }
 
-type SubmissionDetailsData struct {
-	Details SubmissionDetails `json:"submissionDetails"`
+type lcSubmissionDetailsData struct {
+	Details lcSubmissionDetails `json:"submissionDetails"`
 }
 
-type SubmissionDetails struct {
+type lcSubmissionDetails struct {
 	Code string `json:"code"`
 }
