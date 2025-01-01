@@ -60,7 +60,7 @@ func (lc leetcode) fetchQuestions() ([]LCQuestion, error) {
 	}
 	body := &RequestBody[lcUserProgressQuestionListData]{}
 	json.Unmarshal(bodyBytes, body)
-	
+
 	return body.Data.QuestionsList.Questions, nil
 }
 
@@ -92,7 +92,7 @@ func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
 	}
 	cookie := &http.Cookie{
 		Name:     "LEETCODE_SESSION",
-		Value:    lc.cfg.LCookie,
+		Value:    lc.cfg.LcCookie,
 		Path:     "/",
 		Domain:   ".leetcode.com",
 		HttpOnly: true,

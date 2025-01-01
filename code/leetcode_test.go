@@ -1,10 +1,10 @@
 package code
 
 import (
+	_ "embed"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -12,9 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var questionSubmissionListResponse, _ = os.ReadFile("../testdata/question-submission-list-response.json")
-var submissionDetailsResponse, _ = os.ReadFile("../testdata/submission-details-response.json")
-var userProgressQuestionListResponse, _ = os.ReadFile("../testdata/user-progress-question-list-response.json")
+//go:embed leetcode-testdata/leetcode-responses/question-submission-list-response.json
+var questionSubmissionListResponse []byte
+
+//go:embed leetcode-testdata/leetcode-responses/submission-details-response.json
+var submissionDetailsResponse []byte
+
+//go:embed leetcode-testdata/leetcode-responses/user-progress-question-list-response.json
+var userProgressQuestionListResponse []byte
 
 var submissionListCalled = false
 var submissionDetailsCalled = false
@@ -29,7 +34,7 @@ func TestMain(m *testing.M) {
 		currentHandler(w, string(reqBody))
 	}))
 	testUrl := "http://" + server.Listener.Addr().String()
-	cfg := config.Config{LCookie: "COOKIE", RepoUrl: "REPO_URL"}
+	cfg := config.Config{LcCookie: "COOKIE", RepoUrl: "REPO_URL"}
 	lc = NewLeetCode(cfg, testUrl)
 	m.Run()
 }

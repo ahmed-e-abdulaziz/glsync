@@ -30,10 +30,10 @@ func main() {
 
 func initConfig() config.Config {
 	cfg := config.Config{}
-	flag.StringVar(&cfg.LCookie, lcCookieCmd, "", "The cookie of your LeetCode session, refer to the README.md for more info")
+	flag.StringVar(&cfg.LcCookie, lcCookieCmd, "", "The cookie of your LeetCode session, refer to the README.md for more info")
 	flag.StringVar(&cfg.RepoUrl, repoUrlCmd, "", "Github repo's url to push LC submissions to")
 	flag.Parse()
-	if !isValidCookie(cfg.LCookie) {
+	if !isValidCookie(cfg.LcCookie) {
 		log.Fatalf("Invalid leet code session cookie provided, use -%v option to provide your leetcode cookie", lcCookieCmd)
 	}
 	if !isGitHubURL(cfg.RepoUrl) {

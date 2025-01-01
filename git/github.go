@@ -18,7 +18,7 @@ type github struct {
 	repoFolderName string
 }
 
-func NewGithub(cfg config.Config) GitClient {
+func NewGithub(cfg config.Config) github {
 	gh := github{cfg: cfg}
 	url := strings.Split(gh.cfg.RepoUrl, "/")
 	gh.repoFolderName = strings.Split(url[len(url)-1], ".")[0]
@@ -40,9 +40,9 @@ func NewGithub(cfg config.Config) GitClient {
 
 func (g github) Commit(folderName, fileName, code, commitMessage string, timestamp time.Time) {
 	g.createCodeFolderAndFile(folderName, fileName, code)
-	exec.Command("git", "add", ".").Run()
+	exec.Command("git", "add", ".").Output()
 	os.Setenv(commitDateEnvVar, g.toGitDate(timestamp))
-	g.buildCommitCommand(commitMessage, timestamp).Run()
+	g.buildCommitCommand(commitMessage, timestamp).Output()
 	os.Unsetenv(commitDateEnvVar)
 }
 
