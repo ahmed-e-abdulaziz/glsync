@@ -1,0 +1,16 @@
+{
+    "data": {
+        "userProgressQuestionList": {
+            "questions": [
+                {
+                    "frontendId": "128",
+                    "title": "Longest Consecutive Sequence",
+                    "titleSlug": "longest-consecutive-sequence",
+                    "lastSubmittedAt": "2024-12-28T17:25:31+00:00",
+                    "questionStatus": "SOLVED",
+                    "lastResult": "AC"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "data": {
+        "questionSubmissionList": {
+            "lastKey": null,
+            "hasNext": true,
+            "submissions": [
+                {
+                    "id": "1490835403",
+                    "title": "Longest Consecutive Sequence",
+                    "titleSlug": "longest-consecutive-sequence",
+                    "status": 10,
+                    "statusDisplay": "Accepted",
+                    "lang": "golang",
+                    "langName": "Go",
+                    "runtime": "55 ms",
+                    "timestamp": "1735406731",
+                    "url": "/submissions/detail/1490835403/",
+                    "isPending": "Not Pending",
+                    "memory": "11.7 MB",
+                    "hasNotes": false,
+                    "notes": "",
+                    "flagType": "WHITE",
+                    "frontendId": 2,
+                    "topicTags": []
+                }
+            ]
+        }
+    }
+}

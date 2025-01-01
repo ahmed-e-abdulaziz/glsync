@@ -1,0 +1,11 @@
+{
+    "query": "\n    query userProgressQuestionList($filters: UserProgressQuestionListInput) {\n  userProgressQuestionList(filters: $filters) {\n    questions {\n      frontendId\n      title\n      titleSlug\n      lastSubmittedAt\n      questionStatus\n      lastResult\n    }\n  }\n}\n    ",
+    "variables": {
+        "filters": {
+            "questionStatus": "SOLVED",
+            "skip": 0,
+            "limit": 4000
+        }
+    },
+    "operationName": "userProgressQuestionList"
+}

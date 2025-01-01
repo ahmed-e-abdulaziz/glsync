@@ -2,8 +2,11 @@ package code
 
 import "time"
 
+const SubmissionFetchingError = "error while fetching submissions"
+const QuestionFetchingError = "error while fetching submissions"
+
 type CodeClient interface {
-	FetchSubmissions() []Submission
+	FetchSubmissions() ([]Submission, error)
 }
 
 type Question struct {

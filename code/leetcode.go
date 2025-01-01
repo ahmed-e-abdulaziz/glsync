@@ -2,7 +2,9 @@ package code
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +13,15 @@ import (
 
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
 )
+
+//go:embed leetcode-graphql/submission-details-query.json
+var submissionDetailsQuery string
+
+//go:embed leetcode-graphql/submission-list-query.json
+var submissionListQuery string
+
+//go:embed leetcode-graphql/user-progress-question-list-query.json
+var userProgressQuestionListQuery string
 
 type leetcode struct {
 	cfg        config.Config
@@ -21,74 +32,57 @@ func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
 	return leetcode{cfg, leetcodeGraphqlUrl}
 }
 
-func (lc leetcode) FetchSubmissions() []Submission {
-	questions := lc.fetchQuestions()
+func (lc leetcode) FetchSubmissions() ([]Submission, error) {
+	questions, err := lc.fetchQuestions()
+	if err != nil {
+		return nil, errors.New(QuestionFetchingError)
+	}
 	submissions := make([]Submission, len(questions))
 	for idx, question := range questions {
-		lcSubmission := lc.fetchSubmissionOverview(question.TitleSlug)
-		code := lc.fetchSubmissionCode(lcSubmission.Id)
+		lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
+		if err != nil {
+			return nil, errors.New(SubmissionFetchingError)
+		}
+		code, err := lc.fetchSubmissionCode(lcSubmission.Id)
+		if err != nil {
+			return nil, errors.New(SubmissionFetchingError)
+		}
 		submissions[idx] = Submission{question.FrontendId, question.Title, question.TitleSlug, question.LastSubmittedAt, lcSubmission.Lang, code}
 	}
-	return submissions
+	return submissions, nil
 }
 
-func (lc leetcode) fetchQuestions() []LCQuestion {
-	query := `{
-		"query": "\n    query userProgressQuestionList($filters: UserProgressQuestionListInput) {\n  userProgressQuestionList(filters: $filters) {\n    questions {\n      frontendId\n      title\n      titleSlug\n      lastSubmittedAt\n      questionStatus\n      lastResult\n    }\n  }\n}\n    ",
-		"variables": {
-			"filters": {
-				"questionStatus": "SOLVED",
-				"skip": 0,
-				"limit": 4000
-			}
-		},
-		"operationName": "userProgressQuestionList"
-	}`
-	bodyBytes, err := lc.queryLeetcode(query)
+func (lc leetcode) fetchQuestions() ([]LCQuestion, error) {
+	bodyBytes, err := lc.queryLeetcode(userProgressQuestionListQuery)
 	if err != nil {
-		log.Fatal("Encountered an error while fetching user questions from leetcode", err)
+		log.Println(err)
+		return nil, errors.New("encountered an error while fetching user questions from leetcode")
 	}
 	body := &RequestBody[lcUserProgressQuestionListData]{}
 	json.Unmarshal(bodyBytes, body)
-	return body.Data.QuestionsList.Questions
+	
+	return body.Data.QuestionsList.Questions, nil
 }
 
-func (lc leetcode) fetchSubmissionOverview(titleSlug string) lcSumbissionOverview {
-	query := fmt.Sprintf(`{
-		"query": "\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: Int, $status: Int) {\n  questionSubmissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      titleSlug\n      status\n      statusDisplay\n      lang\n      langName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      hasNotes\n      notes\n      flagType\n      frontendId\n      topicTags {\n        id\n      }\n    }\n  }\n}\n    ",
-		"variables": {
-			"questionSlug": "%v",
-			"offset": 0,
-			"limit": 1,
-			"lastKey": null
-		},
-		"operationName": "submissionList"
-	}`, titleSlug)
-
-	bodyBytes, err := lc.queryLeetcode(query)
+func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOverview, error) {
+	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionListQuery, titleSlug))
 	if err != nil {
-		log.Fatal("Encountered an error while fetching submssion overview from leetcode", err)
+		return lcSumbissionOverview{}, errors.New("encountered an error while fetching submssion overview from leetcode")
 	}
 	body := &RequestBody[lcSubmissionListData]{}
 	json.Unmarshal(bodyBytes, body)
-	return body.Data.LCSubmissionList.LCSubmissions[0] // we only need the lastest submission
+	return body.Data.LCSubmissionList.LCSubmissions[0], nil // we only need the lastest submission
 }
 
-func (lc leetcode) fetchSubmissionCode(id string) string {
-	query := fmt.Sprintf(`{
-			"query": "\n    query submissionDetails($submissionId: Int!) {\n  submissionDetails(submissionId: $submissionId) {\n    runtime\n    runtimeDisplay\n    runtimePercentile\n    runtimeDistribution\n    memory\n    memoryDisplay\n    memoryPercentile\n    memoryDistribution\n    code\n    timestamp\n    statusCode\n    user {\n      username\n      profile {\n        realName\n        userAvatar\n      }\n    }\n    lang {\n      name\n      verboseName\n    }\n    question {\n      questionId\n      titleSlug\n      hasFrontendPreview\n    }\n    notes\n    flagType\n    topicTags {\n      tagId\n      slug\n      name\n    }\n    runtimeError\n    compileError\n    lastTestcase\n    codeOutput\n    expectedOutput\n    totalCorrect\n    totalTestcases\n    fullCodeOutput\n    testDescriptions\n    testBodies\n    testInfo\n    stdOutput\n  }\n}\n    ",
-			"variables": {
-				"submissionId": %v
-			},
-			"operationName": "submissionDetails"
-		}`, id)
-	bodyBytes, err := lc.queryLeetcode(query)
+func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
+	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
 	if err != nil {
-		log.Fatal("Encountered an error while fetching submssion code from leetcode", err)
+		log.Println(err)
+		return "", errors.New("encountered an error while fetching submssion code from leetcode")
 	}
 	body := &RequestBody[lcSubmissionDetailsData]{}
 	json.Unmarshal(bodyBytes, body)
-	return body.Data.Details.Code
+	return body.Data.Details.Code, nil
 }
 
 func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
@@ -110,10 +104,10 @@ func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
 	req.Header.Add("Connection", "keep-alive")
 	req.Header.Add("Content-type", "application/json")
 	res, err := http.DefaultClient.Do(req)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 	bodyBytes, _ := io.ReadAll(res.Body)
 	return bodyBytes, nil
 }

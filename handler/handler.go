@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/code"
 	"github.com/ahmed-e-abdulaziz/gh-leet-sync/git"
@@ -17,7 +18,10 @@ func NewHandler(codeClient code.CodeClient, gitClient git.GitClient) Handler {
 }
 
 func (h Handler) Execute() {
-	submissions := h.codeClient.FetchSubmissions()
+	submissions, err := h.codeClient.FetchSubmissions()
+	if err != nil {
+		log.Fatal("Error while fetching submission", err)
+	}
 	for _, s := range submissions {
 		fileName := h.buildFileName(s.Id, s.TitleSlug, s.Lang)
 		folderName := fmt.Sprintf("%v %v", s.Id, s.Title)
