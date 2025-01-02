@@ -1,3 +1,5 @@
+// This package is responsible for fetching the submissions of any code challenges site
+// It is currently implemented by [leetcode.go]
 package code
 
 import "time"

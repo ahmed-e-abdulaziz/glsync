@@ -17,20 +17,46 @@ func NewHandler(codeClient code.CodeClient, gitClient git.GitClient) Handler {
 	return Handler{codeClient, gitClient}
 }
 
+// It does three things:
+//
+//	1- Fetch submissions using codeClient
+//	2- Loop through submissions and git commit each one
+//	3- Use git to push to the repo set in the git client
 func (h Handler) Execute() {
 	submissions, err := h.codeClient.FetchSubmissions()
 	if err != nil {
-		log.Fatal("Error while fetching submission", err)
+		log.Println(err.Error())
+		log.Fatal("Error while fetching code submissions", err)
 	}
-	for _, s := range submissions {
+	log.Printf("Fetched %v submissions, will commit them next\n", len(submissions))
+	for idx, s := range submissions {
+		// ex. s.Id="10", s.TitleSlug="binary-tree", s.Lang="go" then fileName = "10binary-tree.go"
 		fileName := h.buildFileName(s.Id, s.TitleSlug, s.Lang)
+		// ex. s.Id="10", s.Title="Binary Tree", then folderName = "10 Binary Tree"
 		folderName := fmt.Sprintf("%v %v", s.Id, s.Title)
+		// ex. s.Id="10", s.Title="Binary Tree", then commitName = "Code challenge submission for question: 10 Binary Tree"
 		commitName := fmt.Sprintf("Code challenge submission for question: %v %v", s.Id, s.Title)
-		h.git.Commit(folderName, fileName, s.Code, commitName, s.LastSubmittedAt)
+		err := h.git.Commit(folderName, fileName, s.Code, commitName, s.LastSubmittedAt)
+		if err != nil {
+			log.Println(err.Error())
+			log.Printf("Encountered an error while commiting the code for question with ID: %v\n", s.Id)
+		}
+		log.Printf("%v%% questions committed. Committed question no. %v of total %v with ID: %v\n", idx/len(submissions), idx, len(submissions), s.Id)
 	}
-	h.git.Push()
+	err = h.git.Push()
+	if err != nil {
+		log.Println(err.Error())
+		log.Fatal("Encountered an error while pushing to git, exiting...")
+	}
 }
 
+// Takes the id, titleSlug and lang to return the fileName
+//
+// It will follow the format <id><titleSlug>.<langExtension>
+//
+// It figures out the lang extension using its internal langFileExtension map
+// if there any code client support a new language then add it here to avoid future errors
+// currently this map was only formed using LeetCode's lang name
 func (Handler) buildFileName(id, titleSlug, lang string) string {
 	langFileExtension := map[string]string{
 		"cpp":        "cpp",
