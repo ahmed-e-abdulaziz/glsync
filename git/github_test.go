@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	testDir := createTestFolder()
 	output, err := exec.Command("git", "init").Output()
 	if err != nil {
-		log.Fatal(string(output), err)
+		log.Fatal(string(output)+" ", err)
 	}
 	g = github{config.Config{LcCookie: "COOKIE", RepoUrl: "REPO_URL"}, testDir}
 	m.Run()
@@ -69,7 +69,7 @@ func TestCommit(t *testing.T) {
 func getCommitTimeAndMessage(t *testing.T) (time.Time, string) {
 	logOutputBytes, err := exec.Command("git", "log", "--pretty=format:'%ad|%s'", "--date=iso").Output()
 	if err != nil {
-		t.Fatal("Failed to do git log command", logOutputBytes, err)
+		t.Fatal("Failed to do git log command ", logOutputBytes, err)
 	}
 	logOutput := string(logOutputBytes)
 	logOutput = logOutput[1 : len(logOutput)-1]

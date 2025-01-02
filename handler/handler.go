@@ -25,8 +25,7 @@ func NewHandler(codeClient code.CodeClient, gitClient git.GitClient) Handler {
 func (h Handler) Execute() {
 	submissions, err := h.codeClient.FetchSubmissions()
 	if err != nil {
-		log.Println(err.Error())
-		log.Fatal("Error while fetching code submissions", err)
+		panic("Error while fetching code submissions: " + err.Error())
 	}
 	log.Printf("Fetched %v submissions, will commit them next\n", len(submissions))
 	for idx, s := range submissions {
@@ -45,8 +44,7 @@ func (h Handler) Execute() {
 	}
 	err = h.git.Push()
 	if err != nil {
-		log.Println(err.Error())
-		log.Fatal("Encountered an error while pushing to git, exiting...")
+		panic("Encountered an error while pushing to git, exiting...")
 	}
 }
 
