@@ -69,7 +69,7 @@ func TestCommit(t *testing.T) {
 func getCommitTimeAndMessage(t *testing.T) (time.Time, string) {
 	logOutputBytes, err := exec.Command("git", "log", "--pretty=format:'%ad|%s'", "--date=iso").Output()
 	if err != nil {
-		t.Fatal("Failed to do git log command ", logOutputBytes, err)
+		t.Fatal("Failed to do git log command ", string(logOutputBytes), err)
 	}
 	logOutput := string(logOutputBytes)
 	logOutput = logOutput[1 : len(logOutput)-1]
