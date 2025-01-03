@@ -36,7 +36,9 @@ jobs:
       run: make test
 
     - name: create release version
-      run: gh release create "$VERSION" LICENSE
+      run: | 
+        gh release delete "$VERSION" -y --cleanup-tag
+        gh release create "$VERSION" LICENSE
 
     - name: build linux/amd64
       run: make build-linux-amd64
