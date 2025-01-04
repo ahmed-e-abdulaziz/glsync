@@ -14,7 +14,7 @@ This tool makes it easy to take all the code you previously submitted to LeetCod
 
 I created it because companies judge interviewees by how frequently they commit to Github. This can make time spent in LeetCode feel wasted, as it won't be visible on your GitHub profile.
 
-Some tools do something similar but require submitting each question independently, which is not useful if you want your previous commits.
+Some tools do something similar but require submitting each question independently, which is useless if you want your previous commits.
 I found another tool that commits all your code but doesn't respect the submission timestamp. So, your GitHub profile will look weird with all your LeetCode submitted simultaneously. That also doesn't showcase your journey with LeetCode or how you improved the type of questions you are solving.
 
 So now, with one single command, you can transfer all of your LeetCode submissions to GitHub, and each commit will use the LeetCode's submission timestamp/
@@ -28,14 +28,14 @@ Do one of the following:
 
 ## LeetCode Cookie
 
-You need LeetCode's session cookie to access the GraphQL endpoints to get the code submissions.
+You need LeetCode's session cookie to access the GraphQL endpoints and get the code submissions.
 
 You can get the cookie by doing the following:
 
 1. Log in to <https://leetcode.com>
-2. Open developer tools/console, here is how to do it in Chrome <https://developer.chrome.com/docs/devtools/open>
-3. Navigate to **Application** tab
-4. Select **Cookies** on the left panel
+2. Open developer tools or console. Here is how to do it in Chrome <https://developer.chrome.com/docs/devtools/open>
+3. Navigate to the **Application** tab
+4. Select **Cookies** in the left panel
 5. Copy the value for **LEETCODE_SESSION**
 
 ## Usage
