@@ -80,7 +80,7 @@ func initStubRepo(t *testing.T) string {
 
 func getCommitTimeAndMessage(t *testing.T, repoPath string) (time.Time, string) {
 	// git log --pretty=format:'%ad|%s'" --date=iso
-	logOutputBytes, err := exec.Command("git", "-C", repoPath, "log", "--pretty=format:'%ad|%s'", "--date=iso").Output()
+	logOutputBytes, err := exec.Command("git", "-C", repoPath, "log", "--pretty=format:'%ad|%s'", "--date=iso").CombinedOutput()
 	if err != nil {
 		t.Fatal("Failed to do git log command ", logOutputBytes, err)
 	}

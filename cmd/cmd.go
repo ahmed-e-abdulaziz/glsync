@@ -32,10 +32,10 @@ func initConfig() config.Config {
 	flag.StringVar(&cfg.RepoUrl, repoUrlCmd, "", "The git repo's url to push LC submissions to")
 	flag.Parse()
 	if cfg.LcCookie == "" || !isValidCookie(cfg.LcCookie) {
-		log.Fatalf("Invalid leet code session cookie provided, use -%v option to provide your leetcode cookie", lcCookieCmd)
+		log.Panicf("Invalid leet code session cookie provided, use -%v option to provide your leetcode cookie", lcCookieCmd)
 	}
 	if cfg.RepoUrl == "" {
-		log.Fatalf("No git repo url was provided, use -%v option to provide your git repo url ", repoUrlCmd)
+		log.Panicf("No git repo url was provided, use -%v option to provide your git repo url ", repoUrlCmd)
 	}
 	log.Println("Input parsed successfully.")
 	return cfg

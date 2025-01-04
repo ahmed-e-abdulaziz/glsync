@@ -30,7 +30,7 @@ func NewGitCli(cfg config.Config) gitcli {
 	}
 
 	if err := exec.Command("git", "clone", cfg.RepoUrl).Run(); err != nil {
-		log.Fatalf(
+		log.Panicf(
 			`Encountered an error while cloning the repo.
 			Please create your repo on Git before using glsync, the repo: "%s" doesn't exist`,
 			cfg.RepoUrl)
@@ -40,32 +40,25 @@ func NewGitCli(cfg config.Config) gitcli {
 }
 
 func (g gitcli) Commit(folderName, fileName, code, commitMessage string, timestamp time.Time) error {
+	// TODO: Sanitize the folder and file names to make them valid, https://stackoverflow.com/questions/4814040/allowed-characters-in-filename
 	err := g.createCodeFolderAndFile(folderName, fileName, code)
 	if err != nil {
 		return fmt.Errorf("encountered the following error while creating the code folder and file:\n%v", err)
 	}
-	out, err := exec.Command("git", "add", ".").Output()
+	out, err := exec.Command("git", "add", ".").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf(`encountered an error while executing the command 'git add .' in folder %s.
 			The error:%s with command output:%s`, g.repoFolderName, err, string(out))
 	}
-	err = os.Setenv(commitDateEnvVar, g.toGitDate(timestamp))
-	if err != nil {
-		return fmt.Errorf(`encountered an error while executing the command 'git add .' in folder %s.
-			The error: %s 
-			with command output: %s`, g.repoFolderName, err, string(out))
-	}
-	out, err = exec.Command("git", "commit", fmt.Sprintf("--date='%v'", g.toGitDate(timestamp)), fmt.Sprintf("-m %s", commitMessage)).Output()
+	os.Setenv(commitDateEnvVar, g.toGitDate(timestamp))
+	defer os.Unsetenv(commitDateEnvVar)
+	out, err = exec.Command("git", "commit", fmt.Sprintf("--date='%v'", g.toGitDate(timestamp)), fmt.Sprintf("-m %s", commitMessage)).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf(`encountered an error while executing the command 'git commit --date='%s' -m %s' in folder %s.
 			The error: %s 
 			with command output: %s`,
 			fmt.Sprintf("--date='%v'", g.toGitDate(timestamp)), fmt.Sprintf("-m %s", commitMessage),
 			g.repoFolderName, err, string(out))
-	}
-	err = os.Unsetenv(commitDateEnvVar)
-	if err != nil {
-		return errors.New("error occured while unsetting env var: " + commitDateEnvVar)
 	}
 	return nil
 }
