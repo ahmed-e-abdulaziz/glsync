@@ -1,6 +1,6 @@
 # gh-leet-sync
 
-CLI tool to sync all your LeetCode submissions to Github
+CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
 
 ## Requirements
 

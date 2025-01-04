@@ -14,13 +14,13 @@ import (
 
 const commitDateEnvVar = "GIT_COMMITTER_DATE"
 
-type github struct {
+type gitcli struct {
 	cfg            config.Config
 	repoFolderName string
 }
 
-func NewGithub(cfg config.Config) github {
-	gh := github{cfg: cfg}
+func NewGitCli(cfg config.Config) gitcli {
+	gh := gitcli{cfg: cfg}
 	url := strings.Split(gh.cfg.RepoUrl, "/")
 	gh.repoFolderName = strings.Split(url[len(url)-1], ".")[0]
 	if _, err := os.Stat(gh.repoFolderName); err == nil {
@@ -32,14 +32,14 @@ func NewGithub(cfg config.Config) github {
 	if err := exec.Command("git", "clone", cfg.RepoUrl).Run(); err != nil {
 		log.Fatalf(
 			`Encountered an error while cloning the repo.
-			Please create your repo on Github before using glsync, the repo: "%s" doesn't exist`,
+			Please create your repo on Git before using glsync, the repo: "%s" doesn't exist`,
 			cfg.RepoUrl)
 	}
 	os.Chdir(gh.repoFolderName)
 	return gh
 }
 
-func (g github) Commit(folderName, fileName, code, commitMessage string, timestamp time.Time) error {
+func (g gitcli) Commit(folderName, fileName, code, commitMessage string, timestamp time.Time) error {
 	err := g.createCodeFolderAndFile(folderName, fileName, code)
 	if err != nil {
 		return fmt.Errorf("encountered the following error while creating the code folder and file:\n%v", err)
@@ -70,7 +70,7 @@ func (g github) Commit(folderName, fileName, code, commitMessage string, timesta
 	return nil
 }
 
-func (g github) Push() error {
+func (g gitcli) Push() error {
 	err := exec.Command("git", "push").Run()
 	if err != nil {
 		return errors.New("encountered an error while doing the command 'git push' in the repo folder: " + g.repoFolderName)
@@ -87,7 +87,7 @@ func (g github) Push() error {
 	return nil
 }
 
-func (g github) createCodeFolderAndFile(folderName string, fileName string, code string) error {
+func (g gitcli) createCodeFolderAndFile(folderName string, fileName string, code string) error {
 	filePath := folderName + "/" + fileName
 	err := os.Mkdir(folderName, os.ModePerm)
 	if err != nil {
@@ -100,7 +100,7 @@ func (g github) createCodeFolderAndFile(folderName string, fileName string, code
 	return nil
 }
 
-func (g github) toGitDate(timestamp time.Time) string {
+func (g gitcli) toGitDate(timestamp time.Time) string {
 	_, offset := timestamp.Zone()
 	return fmt.Sprintf("%v %+05d", timestamp.Unix(), offset)
 }

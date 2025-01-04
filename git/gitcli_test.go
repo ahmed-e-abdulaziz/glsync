@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var g github
+var g gitcli
 
 func TestMain(m *testing.M) {
 	testDir := createTestFolder()
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(string(output)+" ", err)
 	}
-	g = github{config.Config{LcCookie: "COOKIE", RepoUrl: "REPO_URL"}, testDir}
+	g = gitcli{config.Config{LcCookie: "COOKIE", RepoUrl: "REPO_URL"}, testDir}
 	m.Run()
 	deleteTestFolder(testDir)
 }
@@ -37,7 +37,7 @@ func createTestFolder() string {
 	os.Chdir(home)
 
 	// Create and go into the test folder
-	testDir := "test-github-folder"
+	testDir := "test-gitcli-folder"
 	os.Mkdir(testDir, os.ModePerm)
 	os.Chdir(home + "/" + testDir)
 	return testDir
