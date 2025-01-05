@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/code"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/git"
+	"github.com/ahmed-e-abdulaziz/glsync/code"
+	"github.com/ahmed-e-abdulaziz/glsync/git"
 )
 
 type Handler struct {

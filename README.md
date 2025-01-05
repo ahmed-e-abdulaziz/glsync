@@ -1,4 +1,4 @@
-# gh-leet-sync
+# glsync
 
 CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
 
@@ -71,7 +71,7 @@ High-level diagram to show how glsync components interact with each other
 
 Sequence Diagram showing how glsync works
 
-![Sequence Diagram showing how glsync works](docs/gh-leet-sync-sequence.png)
+![Sequence Diagram showing how glsync works](docs/glsync-sequence.png)
 
 ## Notes
 

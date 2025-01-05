@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/code"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/mocks/mock_code"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/mocks/mock_git"
+	"github.com/ahmed-e-abdulaziz/glsync/code"
+	"github.com/ahmed-e-abdulaziz/glsync/mocks/mock_code"
+	"github.com/ahmed-e-abdulaziz/glsync/mocks/mock_git"
 	"go.uber.org/mock/gomock"
 )
 

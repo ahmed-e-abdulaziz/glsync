@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
+	"github.com/ahmed-e-abdulaziz/glsync/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

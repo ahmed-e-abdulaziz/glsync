@@ -1,6 +1,6 @@
 package main
 
-import "github.com/ahmed-e-abdulaziz/gh-leet-sync/cmd"
+import "github.com/ahmed-e-abdulaziz/glsync/cmd"
 
 func main() {
 	cmd.Execute("https://leetcode.com/graphql/")

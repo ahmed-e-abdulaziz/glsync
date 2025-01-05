@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
+	"github.com/ahmed-e-abdulaziz/glsync/config"
 	"github.com/stretchr/testify/assert"
 )
 

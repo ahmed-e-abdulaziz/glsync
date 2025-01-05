@@ -7,10 +7,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/code"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/config"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/git"
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/handler"
+	"github.com/ahmed-e-abdulaziz/glsync/code"
+	"github.com/ahmed-e-abdulaziz/glsync/config"
+	"github.com/ahmed-e-abdulaziz/glsync/git"
+	"github.com/ahmed-e-abdulaziz/glsync/handler"
 )
 
 const (

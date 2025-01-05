@@ -12,7 +12,7 @@ package mock_code
 import (
         reflect "reflect"
 
-        code "github.com/ahmed-e-abdulaziz/gh-leet-sync/code"
+        code "github.com/ahmed-e-abdulaziz/glsync/code"
         gomock "go.uber.org/mock/gomock"
 )
 

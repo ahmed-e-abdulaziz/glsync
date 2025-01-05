@@ -1,4 +1,4 @@
-module github.com/ahmed-e-abdulaziz/gh-leet-sync
+module github.com/ahmed-e-abdulaziz/glsync
 
 go 1.23.3
 

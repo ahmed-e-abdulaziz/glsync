@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ahmed-e-abdulaziz/gh-leet-sync/cmd"
+	"github.com/ahmed-e-abdulaziz/glsync/cmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
