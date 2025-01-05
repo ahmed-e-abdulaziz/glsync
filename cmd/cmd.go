@@ -19,11 +19,21 @@ const (
 )
 
 func Execute(lcGraphQlUrl string) {
+	log.SetFlags(0)
+	initUsageFunc()
 	cfg := initConfig()
 	lc := code.NewLeetCode(cfg, lcGraphQlUrl)
 	gh := git.NewGitCli(cfg)
 	handler := handler.NewHandler(lc, gh)
 	handler.Execute()
+}
+
+func initUsageFunc() {
+	oldUsage := flag.Usage
+	flag.Usage = func() {
+		log.Print("CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)\n\n")
+		oldUsage()
+	}
 }
 
 func initConfig() config.Config {
