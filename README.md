@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ahmed-e-abdulaziz/glsync/refs/heads/main/docs/glsync-logo.jpeg" alt="glsync logo">
+</p>
+
 # glsync
 
 CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
