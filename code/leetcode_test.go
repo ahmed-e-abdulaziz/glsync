@@ -44,15 +44,24 @@ func TestFetchSubmissions(t *testing.T) {
 	currentHandler = func(w http.ResponseWriter, reqBody string) {
 		if strings.Contains(reqBody, "userProgressQuestionList") {
 			userProgressQuestionListCalled = true
-			w.Write(userProgressQuestionListResponse)
+			_, err := w.Write(userProgressQuestionListResponse)
+			if err != nil {
+				t.Fatal("Couldn't write userProgressQuestionListResponse to response correctly")
+			}
 		}
 		if strings.Contains(reqBody, "submissionList") {
 			submissionListCalled = true
-			w.Write(questionSubmissionListResponse)
+			_, err := w.Write(questionSubmissionListResponse)
+			if err != nil {
+				t.Fatal("Couldn't write questionSubmissionListResponse to response correctly")
+			}
 		}
 		if strings.Contains(reqBody, "submissionDetails") {
 			submissionDetailsCalled = true
-			w.Write(submissionDetailsResponse)
+			_, err := w.Write(submissionDetailsResponse)
+			if err != nil {
+				t.Fatal("Couldn't write submissionDetailsResponse to response correctly")
+			}
 		}
 	}
 
@@ -88,7 +97,10 @@ func TestFetchSubmissionsShouldReturnErrorWhenFetchSubmissionOverviewFails(t *te
 	// Given
 	currentHandler = func(w http.ResponseWriter, reqBody string) {
 		if strings.Contains(reqBody, "userProgressQuestionList") {
-			w.Write(userProgressQuestionListResponse)
+			_, err := w.Write(userProgressQuestionListResponse)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 		if strings.Contains(reqBody, "submissionList") {
 			panic("panicing so the method fetchSubmissionCode fails")
@@ -106,10 +118,16 @@ func TestFetchSubmissionsShouldReturnErrorWhenFetchSubmissionCodeFails(t *testin
 	// Given
 	currentHandler = func(w http.ResponseWriter, reqBody string) {
 		if strings.Contains(reqBody, "userProgressQuestionList") {
-			w.Write(userProgressQuestionListResponse)
+			_, err := w.Write(userProgressQuestionListResponse)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 		if strings.Contains(reqBody, "submissionList") {
-			w.Write(questionSubmissionListResponse)
+			_, err := w.Write(questionSubmissionListResponse)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 		if strings.Contains(reqBody, "submissionDetails") {
 			panic("panicing so the method fetchSubmissionCode fails")

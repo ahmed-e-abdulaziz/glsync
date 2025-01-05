@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -28,19 +29,31 @@ func TestMain(m *testing.M) {
 
 func deleteTestFolder(testDir string) {
 	// Go out of the current test folder and delete it
-	os.Chdir("..")
-	os.RemoveAll(testDir)
+	err := os.Chdir("..")
+	if err != nil {
+		log.Fatal("Couldn't `cd ..` to delete test folder")
+	}
+	err = os.RemoveAll(testDir)
+	if err != nil {
+		log.Fatal("Couldn't delete test folder: " + testDir)
+	}
 }
 
 func createTestFolder() string {
 	// Go to home directory
 	home, _ := os.UserHomeDir()
-	os.Chdir(home)
+
+	errArr := []error{os.Chdir(home)}
 
 	// Create and go into the test folder
 	testDir := "test-gitcli-folder"
-	os.Mkdir(testDir, os.ModePerm)
-	os.Chdir(home + "/" + testDir)
+	errArr = append(errArr, os.Mkdir(testDir, os.ModePerm))
+	errArr = append(errArr, os.Chdir(home+"/"+testDir))
+
+	err := errors.Join(errArr...)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return testDir
 }
 
@@ -50,10 +63,11 @@ func TestCommit(t *testing.T) {
 	defer os.RemoveAll("new-code-folder")
 
 	// When
-	g.Commit(codeFolderName, fileName, code, commitMessage, timestamp)
+	err := g.Commit(codeFolderName, fileName, code, commitMessage, timestamp)
 
 	// Then
 	// Verify that the folder and file of the code exists
+	assert.NoError(t, err)
 	assert.DirExists(t, codeFolderName)
 	filePath := codeFolderName + "/" + fileName
 	assert.FileExists(t, filePath)
@@ -70,7 +84,9 @@ func TestCommit(t *testing.T) {
 
 func TestCommitShouldFailWhenFolderCreationFails(t *testing.T) {
 	// Given
-	os.Mkdir("alreadyexists", os.ModeDir)
+	if err := os.Mkdir("alreadyexists", os.ModeDir); err != nil {
+		t.Error(err)
+	}
 	defer os.Remove("alreadyexists")
 	invalidFolderName, fileName, code, commitMessage, timestamp := "alreadyexists", "stub.go", "package main\n", "commit message", time.Now()
 
@@ -87,7 +103,10 @@ func TestCommitShouldFailWhenFolderCreationFails(t *testing.T) {
 func TestCommitShouldFailWhenGitAddFails(t *testing.T) {
 	// Given
 	originalDir, _ := os.Getwd()
-	os.Chdir(os.TempDir()) // Not a git repo, so git add should fail
+	// Not a git repo, so git add should fail
+	if err := os.Chdir(os.TempDir()); err != nil {
+		t.Error(err)
+	}
 	folderName, fileName, code, commitMessage, timestamp := "new-code-folder", "stub.go", "package main\n", "commit message", time.Now()
 
 	// When
@@ -96,7 +115,9 @@ func TestCommitShouldFailWhenGitAddFails(t *testing.T) {
 	// Then
 	require.Error(t, err)
 	os.RemoveAll("new-code-folder")
-	os.Chdir(originalDir)
+	if err = os.Chdir(originalDir); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestCommitShouldFailWhenGitCommitFails(t *testing.T) {

@@ -68,8 +68,11 @@ func (lc leetcode) fetchQuestions() ([]lcQuestion, error) {
 		return nil, errors.New("encountered an error while fetching user questions from leetcode")
 	}
 	body := &RequestBody[lcUserProgressQuestionListData]{}
-	json.Unmarshal(bodyBytes, body)
-
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("encountered an error while parsing user questions response from leetcode")
+	}
 	return body.Data.QuestionsList.Questions, nil
 }
 
@@ -84,7 +87,11 @@ func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOvervi
 		return lcSumbissionOverview{}, errors.New("encountered an error while fetching submssion overview from leetcode")
 	}
 	body := &RequestBody[lcSubmissionListData]{}
-	json.Unmarshal(bodyBytes, body)
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		log.Println(err)
+		return lcSumbissionOverview{}, errors.New("encountered an error while parsing submssion overview from leetcode")
+	}
 	return body.Data.LCSubmissionList.LCSubmissions[0], nil // we only need the lastest submission
 }
 
@@ -100,7 +107,11 @@ func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
 		return "", errors.New("encountered an error while fetching submssion code from leetcode")
 	}
 	body := &RequestBody[lcSubmissionDetailsData]{}
-	json.Unmarshal(bodyBytes, body)
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		log.Println(err)
+		return "", errors.New("encountered an error while parsing submssion code from leetcode")
+	}
 	return body.Data.Details.Code, nil
 }
 

@@ -28,14 +28,17 @@ func NewGitCli(cfg config.Config) gitcli {
 			gh.repoFolderName)
 		os.RemoveAll(gh.repoFolderName)
 	}
-
-	if err := exec.Command("git", "clone", cfg.RepoUrl).Run(); err != nil {
+	err := exec.Command("git", "clone", cfg.RepoUrl).Run()
+	if err != nil {
 		log.Panicf(
 			`Encountered an error while cloning the repo.
 			Please create your repo on Git before using glsync, the repo: "%s" doesn't exist`,
 			cfg.RepoUrl)
 	}
-	os.Chdir(gh.repoFolderName)
+	err = os.Chdir(gh.repoFolderName)
+	if err != nil {
+		log.Panicf("Couldn't chdir into repo folder %s. Please check permissions and try again", gh.repoFolderName)
+	}
 	return gh
 }
 

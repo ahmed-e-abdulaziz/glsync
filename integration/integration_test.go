@@ -26,7 +26,7 @@ var userProgressQuestionListCalled, submissionListCalled, submissionDetailsCalle
 
 func TestLeetCodeGitIntegration(t *testing.T) {
 	// Given
-	mockLeetCodeUrl := initMockLeetCode()
+	mockLeetCodeUrl := initMockLeetCode(t)
 	mockGitRepoUrl := initStubRepo(t)
 	os.Args = append(os.Args, "-lc-cookie=eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiWW91IGZvdW5kIGEgc2VjcmV0ISJ9.bg7oA5pFvtjAn1cXW7RRVhl0MUpJqmb90AUiRjh5XHY") // Fake but valid JWT, like LeetCode cookie
 	os.Args = append(os.Args, "-repo-url="+mockGitRepoUrl)
@@ -48,20 +48,29 @@ func TestLeetCodeGitIntegration(t *testing.T) {
 	assert.Equal(t, "Code challenge submission for question: 128 Longest Consecutive Sequence", message)
 }
 
-func initMockLeetCode() string {
+func initMockLeetCode(t *testing.T) string {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqBody, _ := io.ReadAll(r.Body)
 		if strings.Contains(string(reqBody), "userProgressQuestionList") {
 			userProgressQuestionListCalled = true
-			w.Write(userProgressQuestionListResponse)
+			_, err := w.Write(userProgressQuestionListResponse)
+			if err != nil {
+				t.Fatal("Couldn't write userProgressQuestionListResponse to response correctly")
+			}
 		}
 		if strings.Contains(string(reqBody), "submissionList") {
 			submissionListCalled = true
-			w.Write(questionSubmissionListResponse)
+			_, err := w.Write(questionSubmissionListResponse)
+			if err != nil {
+				t.Fatal("Couldn't write questionSubmissionListResponse to response correctly")
+			}
 		}
 		if strings.Contains(string(reqBody), "submissionDetails") {
 			submissionDetailsCalled = true
-			w.Write(submissionDetailsResponse)
+			_, err := w.Write(submissionDetailsResponse)
+			if err != nil {
+				t.Fatal("Couldn't write submissionDetailsResponse to response correctly")
+			}
 		}
 	}))
 	testUrl := "http://" + server.Listener.Addr().String()
