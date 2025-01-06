@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ahmed-e-abdulaziz/glsync/refs/heads/main/docs/glsync-logo.png" alt="glsync logo">
+  <img width="40%" src="https://raw.githubusercontent.com/ahmed-e-abdulaziz/glsync/refs/heads/main/docs/glsync-logo.png" alt="glsync logo">
 </p>
 
 # glsync
