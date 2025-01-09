@@ -77,6 +77,12 @@ Sequence Diagram showing how glsync works
 
 ![Sequence Diagram showing how glsync works](docs/glsync-sequence.png)
 
+## Result
+
+![Example result](docs/example-repo.png)
+
+This is an example of me running glsync against my LeetCode account, you can see the commit dates aren't the same as it respects the dates I did the commits on and it has all the questions I solved on LeetCode. You can see this repo [here](https://github.com/ahmed-e-abdulaziz/leetcode-ahmedehab95)
+
 ## Notes
 
 I did this in about a week, so if you want more features or to support other platforms, or if you encounter bugs, feel free to reach out to me at <ahmed.ehab5010@gmail.com>
