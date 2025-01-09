@@ -92,6 +92,9 @@ func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOvervi
 		log.Println(err)
 		return lcSumbissionOverview{}, errors.New("encountered an error while parsing submssion overview from leetcode")
 	}
+	if len(body.Data.LCSubmissionList.LCSubmissions) == 0 {
+		return lcSumbissionOverview{}, errors.New("couldn't fetch any submissions for question with title slug: " + titleSlug)
+	}
 	return body.Data.LCSubmissionList.LCSubmissions[0], nil // we only need the lastest submission
 }
 
