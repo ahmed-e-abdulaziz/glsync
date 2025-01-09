@@ -52,7 +52,12 @@ func initConfig() config.Config {
 }
 
 func isValidCookie(cookie string) bool {
-	payload, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(strings.Split(cookie, ".")[1])
+	splittedCookie := strings.Split(cookie, ".")
+	if len(splittedCookie) < 3 {
+		log.Println("Invalid LeetCode cookie, it wasn't a valid JWT")
+		return false
+	}
+	payload, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(splittedCookie[1])
 	if err != nil {
 		return false
 	}
