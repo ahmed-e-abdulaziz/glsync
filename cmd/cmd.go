@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/ahmed-e-abdulaziz/glsync/code"
@@ -20,6 +21,8 @@ const (
 
 func Execute(lcGraphQlUrl string) {
 	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
+
 	initUsageFunc()
 	cfg := initConfig()
 	lc := code.NewLeetCode(cfg, lcGraphQlUrl)

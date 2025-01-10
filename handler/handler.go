@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/ahmed-e-abdulaziz/glsync/code"
 	"github.com/ahmed-e-abdulaziz/glsync/git"
@@ -36,11 +37,11 @@ func (h Handler) Execute() {
 		// ex. s.Id="10", s.Title="Binary Tree", then commitName = "Code challenge submission for question: 10 Binary Tree"
 		commitName := fmt.Sprintf("Code challenge submission for question: %v %v", s.Id, s.Title)
 		err := h.git.Commit(folderName, fileName, s.Code, commitName, s.LastSubmittedAt)
-		if err != nil {
-			log.Println(err.Error())
-			log.Printf("Encountered an error while commiting the code for question with ID: %v\n", s.Id)
+		if err != nil && !strings.Contains(err.Error(), "nothing to commit") {
+			log.Println("\t" + err.Error())
+			log.Printf("\tEncountered an error while commiting the code for question with ID: %v\n", s.Id)
 		}
-		log.Printf("%v%% questions committed. Committed question no. %v of total %v with ID: %v\n", idx/len(submissions), idx, len(submissions), s.Id)
+		log.Printf("\t%v%% questions committed. Committed question no. %v of total %v with ID: %v\n", int(float64(idx+1)/float64(len(submissions))*100), idx+1, len(submissions), s.Id)
 	}
 	err = h.git.Push()
 	if err != nil {

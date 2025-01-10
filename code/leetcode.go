@@ -38,12 +38,15 @@ func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
 // Requires cfg.LcCookie to be set correctly or will fail due to access errors
 // Returns an array of [Submission] struct
 func (lc leetcode) FetchSubmissions() ([]Submission, error) {
+	log.Println("\n==============\nFetching submissions next")
 	questions, err := lc.fetchQuestions()
 	if err != nil {
 		return nil, errors.New(QuestionFetchingError)
 	}
+	log.Printf("User has %v questions accepted on LeetCode, fetching code for each next \n", len(questions))
 	submissions := make([]Submission, len(questions))
 	for idx, question := range questions {
+		log.Printf("\tFetching latest submission for question: %v %v\n", question.FrontendId, question.Title)
 		lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
 		if err != nil {
 			log.Println(err.Error())
@@ -56,6 +59,7 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
 		}
 		submissions[idx] = Submission{question.FrontendId, question.Title, question.TitleSlug, question.LastSubmittedAt, lcSubmission.Lang, code}
 	}
+	log.Print("Fetched submissions successfully\n==============\n")
 	return submissions, nil
 }
 
@@ -114,6 +118,10 @@ func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
 	if err != nil {
 		log.Println(err)
 		return "", errors.New("encountered an error while parsing submssion code from leetcode")
+	}
+	if len(body.Data.Details.Code) == 0 {
+		log.Println("Recieved the following response:\n" + string(bodyBytes) + "\n")
+		return "", errors.New("couldn't fetch the code submissions with id: " + id)
 	}
 	return body.Data.Details.Code, nil
 }

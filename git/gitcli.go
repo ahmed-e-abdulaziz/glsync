@@ -28,6 +28,7 @@ func NewGitCli(cfg config.Config) gitcli {
 			gh.repoFolderName)
 		os.RemoveAll(gh.repoFolderName)
 	}
+	log.Printf("Cloning %s next\n", gh.repoFolderName)
 	err := exec.Command("git", "clone", cfg.RepoUrl).Run()
 	if err != nil {
 		log.Panicf(
@@ -39,11 +40,11 @@ func NewGitCli(cfg config.Config) gitcli {
 	if err != nil {
 		log.Panicf("Couldn't chdir into repo folder %s. Please check permissions and try again", gh.repoFolderName)
 	}
+	log.Printf("Cloned %s successfully\n", gh.repoFolderName)
 	return gh
 }
 
 func (g gitcli) Commit(folderName, fileName, code, commitMessage string, timestamp time.Time) error {
-	// TODO: Sanitize the folder and file names to make them valid, https://stackoverflow.com/questions/4814040/allowed-characters-in-filename
 	err := g.createCodeFolderAndFile(folderName, fileName, code)
 	if err != nil {
 		return fmt.Errorf("encountered the following error while creating the code folder and file:\n%v", err)
@@ -51,13 +52,13 @@ func (g gitcli) Commit(folderName, fileName, code, commitMessage string, timesta
 	out, err := exec.Command("git", "add", ".").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf(`encountered an error while executing the command 'git add .' in folder %s.
-			The error:%s with command output:%s`, g.repoFolderName, err, string(out))
+			The error: %s with command output: %s`, g.repoFolderName, err, string(out))
 	}
 	os.Setenv(commitDateEnvVar, g.toGitDate(timestamp))
 	defer os.Unsetenv(commitDateEnvVar)
 	out, err = exec.Command("git", "commit", fmt.Sprintf("--date='%v'", g.toGitDate(timestamp)), fmt.Sprintf("-m %s", commitMessage)).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf(`encountered an error while executing the command 'git commit --date='%s' -m %s' in folder %s.
+		return fmt.Errorf(`encountered an error while executing the command 'git commit %s %s' in folder %s.
 			The error: %s 
 			with command output: %s`,
 			fmt.Sprintf("--date='%v'", g.toGitDate(timestamp)), fmt.Sprintf("-m %s", commitMessage),
@@ -86,12 +87,12 @@ func (g gitcli) Push() error {
 func (g gitcli) createCodeFolderAndFile(folderName string, fileName string, code string) error {
 	filePath := folderName + "/" + fileName
 	err := os.Mkdir(folderName, os.ModePerm)
-	if err != nil {
+	if err != nil && !os.IsExist(err) { // Ignore if file exists to update the file content
 		return err
 	}
 	err = os.WriteFile(filePath, []byte(code), os.ModePerm)
 	if err != nil {
-		return err
+		return errors.New("file exists")
 	}
 	return nil
 }
