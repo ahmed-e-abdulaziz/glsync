@@ -66,7 +66,7 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
 // Fetches question to extract required info for Submission struct
 // Uses LC's GraphQl query that's called userProgressQuestionList
 func (lc leetcode) fetchQuestions() ([]lcQuestion, error) {
-	bodyBytes, err := lc.queryLeetcode(userProgressQuestionListQuery)
+	bodyBytes, _, err := lc.queryLeetcode(userProgressQuestionListQuery)
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("encountered an error while fetching user questions from leetcode")
@@ -86,7 +86,7 @@ func (lc leetcode) fetchQuestions() ([]lcQuestion, error) {
 // titleSlug is a no-whitespace representation of the question title, used to query submissions for a question
 // Returns an error if it encounters one while querying and an nil lcSumbissionOverview
 func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOverview, error) {
-	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionListQuery, titleSlug))
+	bodyBytes, _, err := lc.queryLeetcode(fmt.Sprintf(submissionListQuery, titleSlug))
 	if err != nil {
 		return lcSumbissionOverview{}, errors.New("encountered an error while fetching submssion overview from leetcode")
 	}
@@ -108,7 +108,7 @@ func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOvervi
 // id is usually a string of numbers fetched earlier by fetchSubmissionOverview
 // Returns an error if it encounters one while querying and an empty string
 func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
-	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
+	bodyBytes, headers, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
 	if err != nil {
 		log.Println(err)
 		return "", errors.New("encountered an error while fetching submssion code from leetcode")
@@ -120,7 +120,8 @@ func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
 		return "", errors.New("encountered an error while parsing submssion code from leetcode")
 	}
 	if len(body.Data.Details.Code) == 0 {
-		log.Println("Recieved the following response:\n" + string(bodyBytes) + "\n")
+		log.Println("Recieved the following response body:\n" + string(bodyBytes) + "\n")
+		log.Printf("Recieved the following response headers:\n%v\n", headers)
 		return "", errors.New("couldn't fetch the code submissions with id: " + id)
 	}
 	return body.Data.Details.Code, nil
@@ -130,19 +131,19 @@ func (lc leetcode) fetchSubmissionCode(id string) (string, error) {
 //
 // On success it returns the resulting bytes of the response body and a nil error
 // Otherwise it will return nil and any error it faces while creating the request or while communicating with LC
-func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
+func (lc leetcode) queryLeetcode(query string) ([]byte, map[string][]string, error) {
 	req, err := http.NewRequest(http.MethodPost, lc.graphqlUrl, bytes.NewBuffer([]byte(query)))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	lc.addCookieAndHeaders(req)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer res.Body.Close()
 	bodyBytes, _ := io.ReadAll(res.Body)
-	return bodyBytes, nil
+	return bodyBytes, res.Header, nil
 }
 
 // Adds cfg.LcCookie cookie and necessary headers to req
