@@ -28,7 +28,12 @@ So now, with one single command, you can transfer all of your LeetCode submissio
 Do one of the following:
 
 - Download the released binaries on the GitHub repo and use them directly after renaming it to `glsync`
-- Clone the repo and run `make install`
+- Clone the repo and run `make install`, make sure that your $PATH contains your $GOPATH, such as the following snippet
+
+```sh
+export GOPATH=$HOME/go #Don't do if GOPATH is already set
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+```
 
 ## LeetCode Cookie
 
@@ -36,7 +41,7 @@ You need LeetCode's session cookie to access the GraphQL endpoints and get the c
 
 You can get the cookie by doing the following:
 
-1. Log in to <https://leetcode.com>
+1. Log in to <https://leetcode.com>. Log out first if you are already logged in as we need a fresh login
 2. Open developer tools or console. Here is how to do it in Chrome <https://developer.chrome.com/docs/devtools/open>
 3. Navigate to the **Application** tab
 4. Select **Cookies** in the left panel
