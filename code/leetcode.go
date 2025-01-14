@@ -50,6 +50,24 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
 	submissions := make([]Submission, len(questions))
 	for idx, question := range questions {
 		log.Printf("\tFetching latest submission for question: %v %v\n", question.FrontendId, question.Title)
+        submission, err := lc.fetchQuestionSubmission(question)
+        if err != nil {
+            log.Printf("Warning: Failed to fetch submission for question %s: %v\n", question.Title, err)
+            continue  // Skip this submission but continue with others
+        }
+        submissions = append(submissions, submission)
+    }
+
+    if len(submissions) == 0 {
+        return nil, errors.New("failed to fetch any submissions successfully")
+    }
+
+    log.Printf("Fetched %d/%d submissions successfully\n==============\n", len(submissions), len(questions))
+    return submissions, nil
+}
+
+// New helper function to handle single question submission
+func (lc leetcode) fetchQuestionSubmission(question lcQuestion) (Submission, error) {
 		lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
 		if err != nil {
 			log.Println(err.Error())
