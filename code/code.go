@@ -5,7 +5,7 @@ package code
 import "time"
 
 const SubmissionFetchingError = "error while fetching submissions"
-const QuestionFetchingError = "error while fetching submissions"
+const QuestionFetchingError = "error while fetching questions"
 
 type CodeClient interface {
 	FetchSubmissions() ([]Submission, error)
