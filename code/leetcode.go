@@ -45,8 +45,8 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
     questions, err := lc.fetchQuestions()
 		if err != nil {
 			log.Printf("Error fetching questions: %v\n", err)
-        return nil, fmt.Errorf("question fetching error: %w", err)
-    }
+			return nil, errors.New("failed to fetch questions from LeetCode")
+		}
 
     log.Printf("User has %v questions accepted on LeetCode, fetching code for each next\n", len(questions))
     submissions := make([]Submission, 0, len(questions))  // Changed to 0 initial length
@@ -73,12 +73,14 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
 func (lc leetcode) fetchQuestionSubmission(question lcQuestion) (Submission, error) {
     lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
     if err != nil {
-        return Submission{}, fmt.Errorf("submission overview error: %w", err)
+				log.Printf("Error fetching question submissions: %v\n", err)
+        return Submission{}, errors.New("submission overview error")
     }
 
     code, err := lc.fetchSubmissionCode(lcSubmission.Id, 0)
     if err != nil {
-        return Submission{}, fmt.Errorf("submission code error: %w", err)
+			log.Printf("Error fetching submission code: %v\n", err)
+        return Submission{}, errors.New("submission code error")
     }
 
     return Submission{
@@ -132,6 +134,7 @@ func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOvervi
 
 // Fetches submission's code using the leetcode's submission id
 // Uses LC's GraphQl query that's called submissionDetails
+// Returns an empty string and an error if it encounters one while querying
 func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
     bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
     if err != nil {
