@@ -23,7 +23,8 @@ var submissionListQuery string
 //go:embed leetcode-graphql/user-progress-question-list-query.json
 var userProgressQuestionListQuery string
 
-const maxRetry = 5
+const maxRetry = 25                 // LeetCode API can fail A LOT :( It requires a ton of retries when it fails
+const backoffTime = 1 * time.Second // 1 second to avoid keep using LeetCode API when it fails
 
 // Implementation of CodeClient for LeetCode
 type leetcode struct {
@@ -123,6 +124,8 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
 	}
 	if len(body.Data.Details.Code) == 0 {
 		if retry < maxRetry {
+			log.Printf("LeetCode API failed for %v time, retrying again after %v second(s)", retry+1, backoffTime)
+			time.Sleep(backoffTime)
 			return lc.fetchSubmissionCode(id, retry+1)
 		} else {
 			log.Println("Recieved the following response:\n" + string(bodyBytes) + "\n")
