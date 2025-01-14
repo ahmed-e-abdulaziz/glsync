@@ -23,6 +23,10 @@ I found another tool that commits all your code but doesn't respect the submissi
 
 So now, with one single command, you can transfer all of your LeetCode submissions to GitHub, and each commit will use the LeetCode's submission timestamp/
 
+## Leaderboard
+
+
+
 ## Installation
 
 Do one of the following:

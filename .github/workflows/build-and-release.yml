@@ -36,8 +36,8 @@ jobs:
 
     - name: create release version
       run: |
-        if [ $(git tag -l "${TAG}") ]; then
-            echo "Tag ${TAG} exists"
+        if [ $(git tag -l "${VERSION}") ]; then
+            echo "Version ${VERSION} exists"
         else
             echo "Version ${VERSION} does not exist, creating it next"
             gh release create "$VERSION" LICENSE
