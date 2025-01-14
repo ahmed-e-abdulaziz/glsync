@@ -2,6 +2,7 @@ package code
 
 import (
 	_ "embed"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -139,4 +140,83 @@ func TestFetchSubmissionsShouldReturnErrorWhenFetchSubmissionCodeFails(t *testin
 
 	// Then
 	assert.Error(t, err)
+}
+
+func TestFetchSubmissionsShouldRetryAndFailWithEmptySubmissionDataDetails(t *testing.T) {
+	// Given
+	attemptCount := 0
+	currentHandler = func(w http.ResponseWriter, reqBody string) {
+			if strings.Contains(reqBody, "submissionDetails") {
+					response := RequestBody[lcSubmissionDetailsData]{
+							Data: lcSubmissionDetailsData{
+									Details: nil,
+							},
+					}
+					json.NewEncoder(w).Encode(response)
+					attemptCount++
+			}
+	}
+
+	// When
+	code, err := lc.fetchSubmissionCode("123", 0)
+
+	// Then
+	assert.Error(t, err)
+	assert.Empty(t, code)
+	assert.Equal(t, maxRetry+1, attemptCount)
+}
+
+func TestFetchSubmissionsShouldRetryAndSucceedWithValidCode(t *testing.T) {
+	// Given
+	attemptCount := 0
+	currentHandler = func(w http.ResponseWriter, reqBody string) {
+		if strings.Contains(reqBody, "submissionDetails") {
+			attemptCount++
+			response := RequestBody[lcSubmissionDetailsData]{
+				Data: lcSubmissionDetailsData{
+					Details: &lcSubmissionDetails{
+						Code: "",
+					},
+				},
+			}
+			if attemptCount > 3 {
+				response.Data.Details.Code = "valid code"
+			}
+			json.NewEncoder(w).Encode(response)
+		}
+	}
+
+	// When
+	code, err := lc.fetchSubmissionCode("123", 0)
+
+	// Then
+	assert.NoError(t, err)
+	assert.Equal(t, "valid code", code)
+	assert.Equal(t, 4, attemptCount)
+}
+
+func TestFetchSubmissionsShouldRetryAndFailWithEmptyCode(t *testing.T) {
+	// Given
+	attemptCount := 0
+	currentHandler = func(w http.ResponseWriter, reqBody string) {
+			if strings.Contains(reqBody, "submissionDetails") {
+					response := RequestBody[lcSubmissionDetailsData]{
+							Data: lcSubmissionDetailsData{
+									Details: &lcSubmissionDetails{
+											Code: "",
+									},
+							},
+					}
+					json.NewEncoder(w).Encode(response)
+					attemptCount++
+			}
+	}
+
+	// When
+	code, err := lc.fetchSubmissionCode("123", 0)
+
+	// Then
+	assert.Error(t, err)
+	assert.Empty(t, code)
+	assert.Equal(t, maxRetry+1, attemptCount)
 }
