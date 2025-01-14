@@ -43,8 +43,8 @@ func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
 func (lc leetcode) FetchSubmissions() ([]Submission, error) {
     log.Println("\n==============\nFetching submissions next")
     questions, err := lc.fetchQuestions()
-    if err != nil {
-        log.Printf("Error fetching questions: %v\n", err)
+		if err != nil {
+			log.Printf("Error fetching questions: %v\n", err)
         return nil, fmt.Errorf("question fetching error: %w", err)
     }
 
