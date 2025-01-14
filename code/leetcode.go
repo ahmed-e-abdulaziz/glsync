@@ -158,7 +158,8 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
             time.Sleep(backoffTime)
             return lc.fetchSubmissionCode(id, retry+1)
         }
-        return "", fmt.Errorf("max retries reached, consistently getting null response for submission %s", id)
+				log.Printf("Warning: Max retries reached, consistently getting null response for submission %s", id)
+        return "", fmt.Errorf("max retries reached for null response%s", id)
     }
 
     if len(body.Data.Details.Code) == 0 {
@@ -167,7 +168,8 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
             time.Sleep(backoffTime)
             return lc.fetchSubmissionCode(id, retry+1)
         }
-        return "", fmt.Errorf("max retries reached, empty code for submission %s", id)
+				log.Printf("Warning: Max retries reached with empty code for submission %s", id)
+        return "", fmt.Errorf("max retries reached for empty code")
     }
 
     return body.Data.Details.Code, nil
