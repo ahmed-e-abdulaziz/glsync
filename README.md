@@ -6,6 +6,19 @@
 
 CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
 
+- [glsync](#glsync)
+  - [Requirements](#requirements)
+  - [Introduction](#introduction)
+  - [Leaderboard](#leaderboard)
+  - [Installation](#installation)
+  - [LeetCode Cookie](#leetcode-cookie)
+  - [Usage](#usage)
+  - [How it works](#how-it-works)
+    - [High-Level Diagram](#high-level-diagram)
+    - [Sequence Diagram](#sequence-diagram)
+  - [Result](#result)
+  - [Notes](#notes)
+  
 ## Requirements
 
 - Git
@@ -21,11 +34,16 @@ I created it because companies judge interviewees by how frequently they commit 
 Some tools do something similar but require submitting each question independently, which is useless if you want your previous commits.
 I found another tool that commits all your code but doesn't respect the submission timestamp. So, your GitHub profile will look weird with all your LeetCode submitted simultaneously. That also doesn't showcase your journey with LeetCode or how you improved the type of questions you are solving.
 
-So now, with one single command, you can transfer all of your LeetCode submissions to GitHub, and each commit will use the LeetCode's submission timestamp/
+So now, with one single command, you can transfer all of your LeetCode submissions to GitHub, and each commit will use the LeetCode's submission timestamp
 
 ## Leaderboard
 
+A leadboard of the largest repos created by glsync, contact me or raise an issue to add your repo here as well
 
+| Rank  | Repo                                                      | Solutions Count | Language |
+| ----- | --------------------------------------------------------- | --------------- | -------- |
+| 1 🌟 | https://github.com/Fabiobreo/leetcode-fabiobrea           | 265             | C#       |
+| 2     | https://github.com/ahmed-e-abdulaziz/leetcode-ahmedehab95 | 116             | Go, Java |
 
 ## Installation
 
