@@ -24,7 +24,7 @@ var submissionListQuery string
 var userProgressQuestionListQuery string
 
 const maxRetry = 25                 // LeetCode API can fail A LOT :( It requires a ton of retries when it fails
-const backoffTime = 2 * time.Second // 1 second to avoid keep using LeetCode API when it fails
+const backoffTime = 1 * time.Second // 1 second to avoid keep using LeetCode API when it fails
 
 // Implementation of CodeClient for LeetCode
 type leetcode struct {
