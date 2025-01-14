@@ -41,56 +41,56 @@ func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
 // Requires cfg.LcCookie to be set correctly or will fail due to access errors
 // Returns an array of [Submission] struct
 func (lc leetcode) FetchSubmissions() ([]Submission, error) {
-    log.Println("\n==============\nFetching submissions next")
-    questions, err := lc.fetchQuestions()
-		if err != nil {
-			log.Printf("Error fetching questions: %v\n", err)
-			return nil, errors.New("failed to fetch questions from LeetCode")
-		}
+	log.Println("\n==============\nFetching submissions next")
+	questions, err := lc.fetchQuestions()
+	if err != nil {
+		log.Printf("Error fetching questions: %v\n", err)
+		return nil, errors.New("failed to fetch questions from LeetCode")
+	}
 
-    log.Printf("User has %v questions accepted on LeetCode, fetching code for each next\n", len(questions))
-    submissions := make([]Submission, 0, len(questions))  // Changed to 0 initial length
+	log.Printf("User has %v questions accepted on LeetCode, fetching code for each next\n", len(questions))
+	submissions := make([]Submission, 0, len(questions))  // Changed to 0 initial length
 
-    for _, question := range questions {
-        log.Printf("\tFetching latest submission for question: %v %v\n", question.FrontendId, question.Title)
-        submission, err := lc.fetchQuestionSubmission(question)
-        if err != nil {
-            log.Printf("Warning: Failed to fetch submission for question %s: %v\n", question.Title, err)
-            continue  // Skip this submission but continue with others
-        }
-        submissions = append(submissions, submission)
-    }
+	for _, question := range questions {
+			log.Printf("\tFetching latest submission for question: %v %v\n", question.FrontendId, question.Title)
+			submission, err := lc.fetchQuestionSubmission(question)
+			if err != nil {
+					log.Printf("Warning: Failed to fetch submission for question %s: %v\n", question.Title, err)
+					continue  // Skip this submission but continue with others
+			}
+			submissions = append(submissions, submission)
+	}
 
-    if len(submissions) == 0 {
-        return nil, errors.New("failed to fetch any submissions successfully")
-    }
+	if len(submissions) == 0 {
+			return nil, errors.New("failed to fetch any submissions successfully")
+	}
 
-    log.Printf("Fetched %d/%d submissions successfully\n==============\n", len(submissions), len(questions))
-    return submissions, nil
+	log.Printf("Fetched %d/%d submissions successfully\n==============\n", len(submissions), len(questions))
+	return submissions, nil
 }
 
 // New helper function to handle single question submission
 func (lc leetcode) fetchQuestionSubmission(question lcQuestion) (Submission, error) {
-    lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
-    if err != nil {
-				log.Printf("Error fetching question submissions: %v\n", err)
-        return Submission{}, errors.New("submission overview error")
-    }
+	lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
+	if err != nil {
+			log.Printf("Error fetching question submissions: %v\n", err)
+			return Submission{}, errors.New("submission overview error")
+	}
 
-    code, err := lc.fetchSubmissionCode(lcSubmission.Id, 0)
-    if err != nil {
-			log.Printf("Error fetching submission code: %v\n", err)
-        return Submission{}, errors.New("submission code error")
-    }
+	code, err := lc.fetchSubmissionCode(lcSubmission.Id, 0)
+	if err != nil {
+		log.Printf("Error fetching submission code: %v\n", err)
+			return Submission{}, errors.New("submission code error")
+	}
 
-    return Submission{
-        question.FrontendId,
-        question.Title,
-        question.TitleSlug,
-        question.LastSubmittedAt,
-        lcSubmission.Lang,
-        code,
-    }, nil
+	return Submission{
+			question.FrontendId,
+			question.Title,
+			question.TitleSlug,
+			question.LastSubmittedAt,
+			lcSubmission.Lang,
+			code,
+	}, nil
 }
 
 // Fetches question to extract required info for Submission struct
@@ -136,43 +136,43 @@ func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOvervi
 // Uses LC's GraphQl query that's called submissionDetails
 // Returns an empty string and an error if it encounters one while querying
 func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
-    bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
-    if err != nil {
-        if retry < maxRetry {
-            log.Printf("Network error, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
-            time.Sleep(backoffTime)
-            return lc.fetchSubmissionCode(id, retry+1)
-        }
-        return "", fmt.Errorf("max retries reached for network error: %w", err)
-    }
+	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
+	if err != nil {
+			if retry < maxRetry {
+					log.Printf("Network error, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+					time.Sleep(backoffTime)
+					return lc.fetchSubmissionCode(id, retry+1)
+			}
+			return "", fmt.Errorf("max retries reached for network error: %w", err)
+	}
 
-    body := &RequestBody[lcSubmissionDetailsData]{}
-    if err := json.Unmarshal(bodyBytes, body); err != nil {
-        return "", fmt.Errorf("JSON parsing error: %w", err)
-    }
+	body := &RequestBody[lcSubmissionDetailsData]{}
+	if err := json.Unmarshal(bodyBytes, body); err != nil {
+			return "", fmt.Errorf("JSON parsing error: %w", err)
+	}
 
-    // Check if we got a null response
-    if body.Data.Details == nil {
-        if retry < maxRetry {
-            log.Printf("Null response, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
-            time.Sleep(backoffTime)
-            return lc.fetchSubmissionCode(id, retry+1)
-        }
-				log.Printf("Warning: Max retries reached, consistently getting null response for submission %s", id)
-        return "", fmt.Errorf("max retries reached for null response%s", id)
-    }
+	// Check if we got a null response
+	if body.Data.Details == nil {
+			if retry < maxRetry {
+					log.Printf("Null response, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+					time.Sleep(backoffTime)
+					return lc.fetchSubmissionCode(id, retry+1)
+			}
+			log.Printf("Warning: Max retries reached, consistently getting null response for submission %s", id)
+			return "", fmt.Errorf("max retries reached for null response%s", id)
+	}
 
-    if len(body.Data.Details.Code) == 0 {
-        if retry < maxRetry {
-            log.Printf("Empty code, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
-            time.Sleep(backoffTime)
-            return lc.fetchSubmissionCode(id, retry+1)
-        }
-				log.Printf("Warning: Max retries reached with empty code for submission %s", id)
-        return "", fmt.Errorf("max retries reached for empty code")
-    }
+	if len(body.Data.Details.Code) == 0 {
+			if retry < maxRetry {
+					log.Printf("Empty code, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+					time.Sleep(backoffTime)
+					return lc.fetchSubmissionCode(id, retry+1)
+			}
+			log.Printf("Warning: Max retries reached with empty code for submission %s", id)
+			return "", fmt.Errorf("max retries reached for empty code")
+	}
 
-    return body.Data.Details.Code, nil
+	return body.Data.Details.Code, nil
 }
 
 // queryLeetcode sends the query string to leetcode's GraphQL URL (https://leetcode.com/graphql)
