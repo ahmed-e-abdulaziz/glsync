@@ -140,6 +140,17 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
 		log.Println(err)
 		return "", errors.New("encountered an error while parsing submssion code from leetcode")
 	}
+
+    // Check if we got a null response
+    if body.Data.Details == nil {
+        if retry < maxRetry {
+            log.Printf("Null response, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+            time.Sleep(backoffTime)
+            return lc.fetchSubmissionCode(id, retry+1)
+        }
+        return "", fmt.Errorf("max retries reached, consistently getting null response for submission %s", id)
+    }
+
 	if len(body.Data.Details.Code) == 0 {
 		if retry < maxRetry {
 			log.Printf("LeetCode API failed for %v time, retrying again after %v second(s)", retry+1, backoffTime)
