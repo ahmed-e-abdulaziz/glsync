@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  VERSION: 0.1.5
+  VERSION: 0.1.6
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build-and-release:
