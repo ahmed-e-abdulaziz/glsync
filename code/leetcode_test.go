@@ -22,12 +22,16 @@ var submissionDetailsResponse []byte
 //go:embed leetcode-testdata/leetcode-responses/user-progress-question-list-response.json
 var userProgressQuestionListResponse []byte
 
-var submissionListCalled = false
-var submissionDetailsCalled = false
-var userProgressQuestionListCalled = false
+var (
+	submissionListCalled           = false
+	submissionDetailsCalled        = false
+	userProgressQuestionListCalled = false
+)
 
-var lc leetcode
-var currentHandler func(w http.ResponseWriter, reqBody string)
+var (
+	lc             leetcode
+	currentHandler func(w http.ResponseWriter, reqBody string)
+)
 
 func TestMain(m *testing.M) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -146,15 +150,15 @@ func TestFetchSubmissionsShouldRetryAndFailWithEmptySubmissionDataDetails(t *tes
 	// Given
 	attemptCount := 0
 	currentHandler = func(w http.ResponseWriter, reqBody string) {
-			if strings.Contains(reqBody, "submissionDetails") {
-					response := RequestBody[lcSubmissionDetailsData]{
-							Data: lcSubmissionDetailsData{
-									Details: nil,
-							},
-					}
-					json.NewEncoder(w).Encode(response)
-					attemptCount++
+		if strings.Contains(reqBody, "submissionDetails") {
+			response := RequestBody[lcSubmissionDetailsData]{
+				Data: lcSubmissionDetailsData{
+					Details: nil,
+				},
 			}
+			json.NewEncoder(w).Encode(response)
+			attemptCount++
+		}
 	}
 
 	// When
@@ -199,17 +203,17 @@ func TestFetchSubmissionsShouldRetryAndFailWithEmptyCode(t *testing.T) {
 	// Given
 	attemptCount := 0
 	currentHandler = func(w http.ResponseWriter, reqBody string) {
-			if strings.Contains(reqBody, "submissionDetails") {
-					response := RequestBody[lcSubmissionDetailsData]{
-							Data: lcSubmissionDetailsData{
-									Details: &lcSubmissionDetails{
-											Code: "",
-									},
-							},
-					}
-					json.NewEncoder(w).Encode(response)
-					attemptCount++
+		if strings.Contains(reqBody, "submissionDetails") {
+			response := RequestBody[lcSubmissionDetailsData]{
+				Data: lcSubmissionDetailsData{
+					Details: &lcSubmissionDetails{
+						Code: "",
+					},
+				},
 			}
+			json.NewEncoder(w).Encode(response)
+			attemptCount++
+		}
 	}
 
 	// When
