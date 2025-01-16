@@ -2,10 +2,6 @@
   <img width="40%" src="https://raw.githubusercontent.com/ahmed-e-abdulaziz/glsync/refs/heads/main/docs/glsync-logo.png" alt="glsync logo">
 </p>
 
-# glsync
-
-CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
-
 - [glsync](#glsync)
   - [Requirements](#requirements)
   - [Introduction](#introduction)
@@ -18,6 +14,10 @@ CLI tool to sync all your LeetCode submissions to Github (And possibly any other
     - [Sequence Diagram](#sequence-diagram)
   - [Result](#result)
   - [Notes](#notes)
+
+# glsync
+
+CLI tool to sync all your LeetCode submissions to Github (And possibly any other git client)
   
 ## Requirements
 
