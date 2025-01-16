@@ -9,6 +9,7 @@
   - [Installation](#installation)
   - [LeetCode Cookie](#leetcode-cookie)
   - [Usage](#usage)
+  - [Demo](#demo)
   - [How it works](#how-it-works)
     - [High-Level Diagram](#high-level-diagram)
     - [Sequence Diagram](#sequence-diagram)
@@ -22,6 +23,7 @@ CLI tool to sync all your LeetCode submissions to Github (And possibly any other
 ## Requirements
 
 - Git
+- Empty repo on GitHub to push your submissions to
 - Go 1.23.3 or later to build or install
 - Make to use the Makefile
 
@@ -79,6 +81,12 @@ glsync -lc-cookie="$YOUR_LEETCODE_COOKIE_GOES_HERE" -repo-url="$YOUR_GITHUB_REPO
 ```
 
 It will keep printing each time it commits, showing the progress, and exiting when it finishes.
+
+## Demo
+
+![glsync demo](docs/glsync-full-demo.gif)
+
+You can find the demo video in this repo at `docs/glsync-full-demo.mp4`
 
 ## How it works
 
