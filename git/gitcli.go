@@ -29,8 +29,10 @@ func NewGitCli(cfg config.Config) gitcli {
 		os.RemoveAll(gh.repoFolderName)
 	}
 	log.Printf("Cloning %s next\n", gh.repoFolderName)
-	err := exec.Command("git", "clone", cfg.RepoUrl).Run()
+	out, err := exec.Command("git", "clone", cfg.RepoUrl).CombinedOutput()
 	if err != nil {
+		log.Println("Output ", string(out))
+		log.Println("Error", err.Error())
 		log.Panicf(
 			`Encountered an error while cloning the repo.
 			Please create your repo on Git before using glsync, the repo: "%s" doesn't exist`,
