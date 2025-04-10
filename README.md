@@ -40,13 +40,14 @@ So now, with one single command, you can transfer all of your LeetCode submissio
 
 ## Leaderboard
 
-A leadboard of the largest repos created by glsync, contact me or raise an issue to add your repo here as well
+A leadboard of the largest repos created by glsync, contact me or raise an issue to add your repo here as well or if the count is not up to date.
 
 | Rank  | Repo                                                      | Solutions Count | Language |
 | ----- | --------------------------------------------------------- | --------------- | -------- |
 | 1  🌟 | https://github.com/segorucu/Leetcode                      | 1058            | Python   |
 | 2     | https://github.com/Fabiobreo/leetcode-fabiobrea           | 265             | C#       |
-| 3     | https://github.com/ahmed-e-abdulaziz/leetcode-ahmedehab95 | 116             | Go, Java |
+| 3     | https://github.com/llEraserheadll/LeetcodeSol             | 189             | Python   |
+| 4     | https://github.com/ahmed-e-abdulaziz/leetcode-ahmedehab95 | 116             | Go, Java |
 
 ## Installation
 
