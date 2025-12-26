@@ -2,68 +2,68 @@ name: glsync
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
-  VERSION: 0.1.6
+  VERSION: 0.1.7
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build-and-release:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23.2'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23.2"
 
-    - name: Build
-      run: make build
+      - name: Build
+        run: make build
 
-    - name: Configure git # Required for git commit tests in the test step
-      run : |
+      - name: Configure git # Required for git commit tests in the test step
+        run: |
           git config --global user.email "ahmed.ehab@gmail.com"
           git config --global user.name "Ahmed Ehab"
 
-    - name: Test
-      run: make test
+      - name: Test
+        run: make test
 
-    - name: create release version
-      run: |
-        if [ $(git tag -l "${VERSION}") ]; then
-            echo "Version ${VERSION} exists"
-        else
-            echo "Version ${VERSION} does not exist, creating it next"
-            gh release create "$VERSION" LICENSE
-        fi
+      - name: create release version
+        run: |
+          if [ $(git tag -l "${VERSION}") ]; then
+              echo "Version ${VERSION} exists"
+          else
+              echo "Version ${VERSION} does not exist, creating it next"
+              gh release create "$VERSION" LICENSE
+          fi
 
-    - name: build linux/amd64
-      run: make build-linux-amd64
-    - name: release linux/amd64
-      run: gh release upload --clobber "$VERSION" glsync-linux-amd64
+      - name: build linux/amd64
+        run: make build-linux-amd64
+      - name: release linux/amd64
+        run: gh release upload --clobber "$VERSION" glsync-linux-amd64
 
-    - name: build linux/arm64
-      run: make build-linux-arm64
-    - name: release linux/arm64
-      run: gh release upload --clobber "$VERSION" glsync-linux-arm64
+      - name: build linux/arm64
+        run: make build-linux-arm64
+      - name: release linux/arm64
+        run: gh release upload --clobber "$VERSION" glsync-linux-arm64
 
-    - name: build windows/amd64
-      run: make build-windows-amd64
-    - name: release windows/amd64
-      run: gh release upload --clobber "$VERSION" glsync-windows-amd64.exe
+      - name: build windows/amd64
+        run: make build-windows-amd64
+      - name: release windows/amd64
+        run: gh release upload --clobber "$VERSION" glsync-windows-amd64.exe
 
-    - name: build darwin/amd64
-      run: make build-darwin-amd64
-    - name: release darwin/amd64
-      run: gh release upload --clobber "$VERSION" glsync-darwin-amd64
+      - name: build darwin/amd64
+        run: make build-darwin-amd64
+      - name: release darwin/amd64
+        run: gh release upload --clobber "$VERSION" glsync-darwin-amd64
 
-    - name: build darwin/arm64
-      run: make build-darwin-arm64
-    - name: release darwin/arm64
-      run: gh release upload --clobber "$VERSION" glsync-darwin-arm64
+      - name: build darwin/arm64
+        run: make build-darwin-arm64
+      - name: release darwin/arm64
+        run: gh release upload --clobber "$VERSION" glsync-darwin-arm64
