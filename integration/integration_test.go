@@ -1,4 +1,4 @@
-package integrationtest
+package integration_test
 
 import (
 	_ "embed"
@@ -28,7 +28,7 @@ func TestLeetCodeGitIntegration(t *testing.T) {
 	// Given
 	mockLeetCodeUrl := initMockLeetCode(t)
 	mockGitRepoUrl := initStubRepo(t)
-	os.Args = append(os.Args, "-lc-cookie=eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiWW91IGZvdW5kIGEgc2VjcmV0ISJ9.bg7oA5pFvtjAn1cXW7RRVhl0MUpJqmb90AUiRjh5XHY") // Fake but valid JWT, like LeetCode cookie
+	os.Args = append(os.Args, "-lc-cookie=eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiWW91IGZvdW5kIGEgc2VjcmV0ISJ9.bg7oA5pFvtjAn1cXW7RRVhl0MUpJqmb90AUiRjh5XHY") // Fake but valid JWT, like LeetCode's cookie
 	os.Args = append(os.Args, "-repo-url="+mockGitRepoUrl)
 	defer os.RemoveAll("repo")
 

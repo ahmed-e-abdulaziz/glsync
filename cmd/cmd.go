@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	lcCookieCmd = "lc-cookie"
-	repoUrlCmd  = "repo-url"
+	lcCookieArg    = "lc-cookie"
+	repoUrlArg     = "repo-url"
+	bearerTokenArg = "bearer-token"
 )
 
 func Execute(lcGraphQlUrl string) {
@@ -41,14 +42,14 @@ func initUsageFunc() {
 
 func initConfig() config.Config {
 	cfg := config.Config{}
-	flag.StringVar(&cfg.LcCookie, lcCookieCmd, "", "The cookie of your LeetCode session, refer to the README.md for more info")
-	flag.StringVar(&cfg.RepoUrl, repoUrlCmd, "", "The git repo's url to push LC submissions to")
+	flag.StringVar(&cfg.LcCookie, lcCookieArg, "", "The cookie of your LeetCode session, refer to the README.md for more info")
+	flag.StringVar(&cfg.RepoUrl, repoUrlArg, "", "The git repo's url to push LC submissions to")
 	flag.Parse()
 	if cfg.LcCookie == "" || !isValidCookie(cfg.LcCookie) {
-		log.Panicf("Invalid leet code session cookie provided, use -%v option to provide your leetcode cookie", lcCookieCmd)
+		log.Panicf("Invalid leet code session cookie provided, use -%v option to provide your leetcode cookie", lcCookieArg)
 	}
 	if cfg.RepoUrl == "" {
-		log.Panicf("No git repo url was provided, use -%v option to provide your git repo url ", repoUrlCmd)
+		log.Panicf("No git repo url was provided, use -%v option to provide your git repo url ", repoUrlArg)
 	}
 	log.Println("Input parsed successfully.")
 	return cfg
