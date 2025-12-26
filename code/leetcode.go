@@ -209,6 +209,7 @@ func (lc leetcode) addCookieAndHeaders(req *http.Request) {
 		Secure:   true,
 	}
 	req.AddCookie(cookie)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", lc.cfg.LcCookie))
 	req.Header.Add("Connection", "keep-alive")
 	req.Header.Add("Content-type", "application/json")
 }
