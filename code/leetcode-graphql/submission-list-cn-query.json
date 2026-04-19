@@ -1,0 +1,10 @@
+{
+    "query": "\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      lang\n    }\n  }\n}\n    ",
+    "variables": {
+        "questionSlug": "%v",
+        "offset": 0,
+        "limit": 1,
+        "lastKey": null
+    },
+    "operationName": "submissionList"
+}

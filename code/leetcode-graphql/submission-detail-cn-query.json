@@ -1,0 +1,7 @@
+{
+    "query": "\n    query submissionDetail($id: ID!) {\n  submissionDetail(submissionId: $id) {\n    code\n  }\n}\n    ",
+    "variables": {
+        "id": "%v"
+    },
+    "operationName": "submissionDetail"
+}
