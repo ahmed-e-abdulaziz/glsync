@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ahmed-e-abdulaziz/glsync/config"
@@ -20,22 +21,39 @@ var submissionDetailsQuery string
 //go:embed leetcode-graphql/submission-list-query.json
 var submissionListQuery string
 
+//go:embed leetcode-graphql/submission-list-cn-query.json
+var submissionListQueryCN string
+
+//go:embed leetcode-graphql/submission-detail-cn-query.json
+var submissionDetailQueryCN string
+
 //go:embed leetcode-graphql/user-progress-question-list-query.json
 var userProgressQuestionListQuery string
 
 const (
-	maxRetry    = 25              // LeetCode API can fail A LOT :( It requires a ton of retries when it fails
-	backoffTime = 1 * time.Second // 1 second to avoid keep using LeetCode API when it fails
+	maxRetry         = 25               // LeetCode API can fail A LOT :( It requires a ton of retries when it fails
+	backoffTime      = 1 * time.Second  // 1 second to avoid keep using LeetCode API when it fails
+	// empirically the cn rate-limit cooldown is ~510s (observed: cleared after 17x30s waits).
+	// We wait 520s once to clear it cleanly rather than retrying 17 times in 30s increments.
+	rateLimitBackoff = 520 * time.Second
 )
 
 // Implementation of CodeClient for LeetCode
 type leetcode struct {
-	cfg        config.Config
-	graphqlUrl string
+	cfg          config.Config
+	graphqlUrl   string
+	cookieDomain string // e.g. ".leetcode.com" or ".leetcode.cn"
+	siteOrigin   string // e.g. "https://leetcode.com" or "https://leetcode.cn"
 }
 
 func NewLeetCode(cfg config.Config, leetcodeGraphqlUrl string) leetcode {
-	return leetcode{cfg, leetcodeGraphqlUrl}
+	cookieDomain := ".leetcode.com"
+	siteOrigin := "https://leetcode.com"
+	if strings.Contains(leetcodeGraphqlUrl, "leetcode.cn") {
+		cookieDomain = ".leetcode.cn"
+		siteOrigin = "https://leetcode.cn"
+	}
+	return leetcode{cfg, leetcodeGraphqlUrl, cookieDomain, siteOrigin}
 }
 
 // Fetches submissions from LeetCode
@@ -71,12 +89,24 @@ func (lc leetcode) FetchSubmissions() ([]Submission, error) {
 	return submissions, nil
 }
 
+// cnRequestDelay throttles submission detail fetches on leetcode.cn.
+// Measured: 10-minute sliding window, quota of 60 requests (1 req/10s).
+// Each HTTP round-trip takes ~1s, so a 9s sleep gives ~10s total cycle,
+// staying at the safe boundary without wasting extra time.
+// Total run time: ~560 * 10s = ~95 minutes for 560 questions.
+const cnRequestDelay = 9 * time.Second
+
 // New helper function to handle single question submission
 func (lc leetcode) fetchQuestionSubmission(question lcQuestion) (Submission, error) {
 	lcSubmission, err := lc.fetchSubmissionOverview(question.TitleSlug)
 	if err != nil {
 		log.Printf("Error fetching question submissions: %v\n", err)
 		return Submission{}, errors.New("submission overview error")
+	}
+
+	// Throttle requests on CN to avoid triggering the rate limiter.
+	if lc.cookieDomain == ".leetcode.cn" {
+		time.Sleep(cnRequestDelay)
 	}
 
 	code, err := lc.fetchSubmissionCode(lcSubmission.Id, 0)
@@ -118,32 +148,60 @@ func (lc leetcode) fetchQuestions() ([]lcQuestion, error) {
 // titleSlug is a no-whitespace representation of the question title, used to query submissions for a question
 // Returns an error if it encounters one while querying and an nil lcSumbissionOverview
 func (lc leetcode) fetchSubmissionOverview(titleSlug string) (lcSumbissionOverview, error) {
-	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionListQuery, titleSlug))
-	if err != nil {
-		return lcSumbissionOverview{}, fmt.Errorf("error fetching submission overview from leetcode: %w", err)
+	var (
+		bodyBytes   []byte
+		err         error
+		submissions []lcSumbissionOverview
+	)
+
+	if lc.cookieDomain == ".leetcode.cn" {
+		// leetcode.cn uses "submissionList" field; leetcode.com uses "questionSubmissionList"
+		bodyBytes, err = lc.queryLeetcode(fmt.Sprintf(submissionListQueryCN, titleSlug))
+		if err != nil {
+			return lcSumbissionOverview{}, fmt.Errorf("error fetching submission overview from leetcode: %w", err)
+		}
+		body := &RequestBody[lcSubmissionListDataCN]{}
+		if err = json.Unmarshal(bodyBytes, body); err != nil {
+			log.Println(err)
+			return lcSumbissionOverview{}, fmt.Errorf("error parsing submission overview from leetcode: %w", err)
+		}
+		submissions = body.Data.LCSubmissionList.LCSubmissions
+	} else {
+		bodyBytes, err = lc.queryLeetcode(fmt.Sprintf(submissionListQuery, titleSlug))
+		if err != nil {
+			return lcSumbissionOverview{}, fmt.Errorf("error fetching submission overview from leetcode: %w", err)
+		}
+		body := &RequestBody[lcSubmissionListData]{}
+		if err = json.Unmarshal(bodyBytes, body); err != nil {
+			log.Println(err)
+			return lcSumbissionOverview{}, fmt.Errorf("error parsing submission overview from leetcode: %w", err)
+		}
+		submissions = body.Data.LCSubmissionList.LCSubmissions
 	}
-	body := &RequestBody[lcSubmissionListData]{}
-	err = json.Unmarshal(bodyBytes, body)
-	if err != nil {
-		log.Println(err)
-		return lcSumbissionOverview{}, fmt.Errorf("error parsing submission overview from leetcode: %w", err)
-	}
-	if len(body.Data.LCSubmissionList.LCSubmissions) == 0 {
+
+	if len(submissions) == 0 {
 		return lcSumbissionOverview{}, fmt.Errorf("no submissions found for question: %s", titleSlug)
 	}
-	return body.Data.LCSubmissionList.LCSubmissions[0], nil // we only need the lastest submission
+	return submissions[0], nil // we only need the latest accepted submission
 }
 
-// Fetches submission's code using the leetcode's submission id
-// Uses LC's GraphQl query that's called submissionDetails
-// Returns an empty string and an error if it encounters one while querying
+// Fetches submission's code using the leetcode's submission id.
+// On leetcode.cn uses submissionDetail (singular); on leetcode.com uses submissionDetails (plural).
+// Returns an empty string and an error if it encounters one while querying.
 func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
+	if lc.cookieDomain == ".leetcode.cn" {
+		return lc.fetchSubmissionCodeCN(id, retry)
+	}
+	return lc.fetchSubmissionCodeCOM(id, retry)
+}
+
+func (lc leetcode) fetchSubmissionCodeCOM(id string, retry int) (string, error) {
 	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailsQuery, id))
 	if err != nil {
 		if retry < maxRetry {
 			log.Printf("Network error, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
 			time.Sleep(backoffTime)
-			return lc.fetchSubmissionCode(id, retry+1)
+			return lc.fetchSubmissionCodeCOM(id, retry+1)
 		}
 		return "", fmt.Errorf("max retries reached for network error: %w", err)
 	}
@@ -153,12 +211,11 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
 		return "", fmt.Errorf("JSON parsing error: %w", err)
 	}
 
-	// Check if we got a null response
 	if body.Data.Details == nil {
 		if retry < maxRetry {
 			log.Printf("Null response, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
 			time.Sleep(backoffTime)
-			return lc.fetchSubmissionCode(id, retry+1)
+			return lc.fetchSubmissionCodeCOM(id, retry+1)
 		}
 		log.Printf("Warning: Max retries reached, consistently getting null response for submission %s", id)
 		return "", fmt.Errorf("max retries reached for null response%s", id)
@@ -168,7 +225,7 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
 		if retry < maxRetry {
 			log.Printf("Empty code, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
 			time.Sleep(backoffTime)
-			return lc.fetchSubmissionCode(id, retry+1)
+			return lc.fetchSubmissionCodeCOM(id, retry+1)
 		}
 		log.Printf("Warning: Max retries reached with empty code for submission %s", id)
 		return "", fmt.Errorf("max retries reached for empty code")
@@ -177,10 +234,60 @@ func (lc leetcode) fetchSubmissionCode(id string, retry int) (string, error) {
 	return body.Data.Details.Code, nil
 }
 
-// queryLeetcode sends the query string to leetcode's GraphQL URL (https://leetcode.com/graphql)
+func (lc leetcode) fetchSubmissionCodeCN(id string, retry int) (string, error) {
+	bodyBytes, err := lc.queryLeetcode(fmt.Sprintf(submissionDetailQueryCN, id))
+	if err != nil {
+		if retry < maxRetry {
+			log.Printf("Network error, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+			time.Sleep(backoffTime)
+			return lc.fetchSubmissionCodeCN(id, retry+1)
+		}
+		return "", fmt.Errorf("max retries reached for network error: %w", err)
+	}
+
+	// leetcode.cn rate-limits with a JSON-escaped Chinese message. The raw response
+	// body contains literal \uXXXX sequences, not decoded UTF-8, so we match the
+	// escaped form. "超出访问限制" = \u8d85\u51fa\u8bbf\u95ee\u9650\u5236
+	if strings.Contains(string(bodyBytes), `\u8d85\u51fa\u8bbf\u95ee\u9650\u5236`) {
+		if retry < maxRetry {
+			log.Printf("Rate limit hit, retry %d/%d after %v\n", retry+1, maxRetry, rateLimitBackoff)
+			time.Sleep(rateLimitBackoff)
+			return lc.fetchSubmissionCodeCN(id, retry+1)
+		}
+		return "", fmt.Errorf("max retries reached for CN rate limit for id=%s", id)
+	}
+
+	body := &RequestBody[lcSubmissionDetailDataCN]{}
+	if err := json.Unmarshal(bodyBytes, body); err != nil {
+		return "", fmt.Errorf("JSON parsing error: %w", err)
+	}
+
+	if body.Data.Detail == nil {
+		if retry < maxRetry {
+			log.Printf("Null response, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+			time.Sleep(backoffTime)
+			return lc.fetchSubmissionCodeCN(id, retry+1)
+		}
+		return "", fmt.Errorf("max retries reached for null CN submissionDetail response for id=%s", id)
+	}
+
+	if len(body.Data.Detail.Code) == 0 {
+		if retry < maxRetry {
+			log.Printf("Empty code, retry %d/%d after %v\n", retry+1, maxRetry, backoffTime)
+			time.Sleep(backoffTime)
+			return lc.fetchSubmissionCodeCN(id, retry+1)
+		}
+		return "", fmt.Errorf("max retries reached for empty CN code for submission %s", id)
+	}
+
+	return body.Data.Detail.Code, nil
+}
+
+// queryLeetcode sends the query string to leetcode's GraphQL URL.
 //
-// On success it returns the resulting bytes of the response body and a nil error
-// Otherwise it will return nil and any error it faces while creating the request or while communicating with LC
+// On success it returns the resulting bytes of the response body and a nil error.
+// Otherwise it will return nil and any error it faces while creating the request
+// or while communicating with LC.
 func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodPost, lc.graphqlUrl, bytes.NewBuffer([]byte(query)))
 	if err != nil {
@@ -193,25 +300,71 @@ func (lc leetcode) queryLeetcode(query string) ([]byte, error) {
 	}
 	defer res.Body.Close()
 	bodyBytes, _ := io.ReadAll(res.Body)
+	// A non-JSON response (e.g. HTML error page) would cause confusing downstream
+	// JSON parse errors; surface the HTTP status and a snippet here instead.
+	if len(bodyBytes) > 0 && bodyBytes[0] != '{' && bodyBytes[0] != '[' {
+		preview := string(bodyBytes)
+		if len(preview) > 300 {
+			preview = preview[:300] + "..."
+		}
+		return nil, fmt.Errorf("unexpected non-JSON response (HTTP %d) from %s: %s",
+			res.StatusCode, lc.graphqlUrl, preview)
+	}
 	return bodyBytes, nil
 }
 
-// Adds cfg.LcCookie cookie and necessary headers to req
+// browserUserAgent is a standard Chrome UA sent with every request.
+// Cloudflare and leetcode.cn both fingerprint the User-Agent; the Go default
+// ("Go-http-client/2.0") is immediately flagged as a bot.
+const browserUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+	"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+// Adds cfg.LcCookie cookie and necessary headers to req.
+// For leetcode.cn, also attaches the csrftoken and cf_clearance cookies,
+// x-csrftoken header, and the Referer/Origin headers required by Django's
+// CSRF middleware and Cloudflare Bot Management.
 func (lc leetcode) addCookieAndHeaders(req *http.Request) {
-	cookie := &http.Cookie{
+	req.AddCookie(&http.Cookie{
 		Name:     "LEETCODE_SESSION",
 		Value:    lc.cfg.LcCookie,
 		Path:     "/",
-		Domain:   ".leetcode.com",
+		Domain:   lc.cookieDomain,
 		HttpOnly: true,
 		MaxAge:   1209600,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   true,
+	})
+	if lc.cfg.LcCsrfToken != "" {
+		req.AddCookie(&http.Cookie{
+			Name:     "csrftoken",
+			Value:    lc.cfg.LcCsrfToken,
+			Path:     "/",
+			Domain:   lc.cookieDomain,
+			SameSite: http.SameSiteLaxMode,
+			Secure:   true,
+		})
+		req.Header.Add("x-csrftoken", lc.cfg.LcCsrfToken)
 	}
-	req.AddCookie(cookie)
+	if lc.cfg.LcCfClearance != "" {
+		// Cloudflare sets cf_clearance after the browser solves its JS challenge.
+		// It is bound to the IP + User-Agent that solved the challenge, so
+		// browserUserAgent must match what your browser sent at that time.
+		req.AddCookie(&http.Cookie{
+			Name:   "cf_clearance",
+			Value:  lc.cfg.LcCfClearance,
+			Path:   "/",
+			Domain: lc.cookieDomain,
+			Secure: true,
+		})
+	}
+	req.Header.Set("User-Agent", browserUserAgent)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", lc.cfg.LcCookie))
 	req.Header.Add("Connection", "keep-alive")
 	req.Header.Add("Content-type", "application/json")
+	// Django's CsrfViewMiddleware validates Referer against Origin for HTTPS
+	// requests; without it the server returns a 403 HTML page instead of JSON.
+	req.Header.Add("Referer", lc.siteOrigin+"/")
+	req.Header.Add("Origin", lc.siteOrigin)
 }
 
 type RequestBody[T any] struct {
@@ -239,6 +392,12 @@ type lcSubmissionListData struct {
 	LCSubmissionList lcSubmissionList `json:"questionSubmissionList"`
 }
 
+// lcSubmissionListDataCN is used for leetcode.cn whose GraphQL schema exposes
+// the field as "submissionList" instead of "questionSubmissionList".
+type lcSubmissionListDataCN struct {
+	LCSubmissionList lcSubmissionList `json:"submissionList"`
+}
+
 type lcSubmissionList struct {
 	LCSubmissions []lcSumbissionOverview `json:"submissions"`
 }
@@ -254,4 +413,10 @@ type lcSubmissionDetailsData struct {
 
 type lcSubmissionDetails struct {
 	Code string `json:"code"`
+}
+
+// lcSubmissionDetailDataCN is the response wrapper for leetcode.cn's
+// submissionDetail (singular) GraphQL field.
+type lcSubmissionDetailDataCN struct {
+	Detail *lcSubmissionDetails `json:"submissionDetail"`
 }
