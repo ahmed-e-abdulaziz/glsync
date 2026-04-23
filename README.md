@@ -45,6 +45,7 @@ A leadboard of the largest repos created by glsync, contact me or raise an issue
 | Rank  | Repo                                                      | Solutions Count | Language |
 | ----- | --------------------------------------------------------- | --------------- | -------- |
 | 1  🌟 | https://github.com/segorucu/Leetcode                      | 1058            | Python   |
+| 2     | https://github.com/yolo2519/leecode-sync                  | 560             | Python   |
 | 2     | https://github.com/Fabiobreo/leetcode-fabiobrea           | 265             | C#       |
 | 3     | https://github.com/llEraserheadll/LeetcodeSol             | 189             | Python   |
 | 4     | https://github.com/ahmed-e-abdulaziz/leetcode-ahmedehab95 | 116             | Go, Java |
